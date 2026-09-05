@@ -79,6 +79,16 @@ fi
 brand_php_src
 build_args=("$STATIC_EXTS" --build-cli --build-fpm)
 # A prerelease drops the shared extensions entirely, so do not pass an empty
+# 8.1 and 8.2 ship a bcmath written with K&R function definitions, which C23
+# removed. spc patches the shipped configure to probe -std=gnu17 instead of
+# gnu23, but it then runs buildconf --force, which regenerates configure from
+# the runner's autoconf and puts the gnu23 probe back. That is why the build
+# only breaks on images whose clang can actually do C23. Autoconf reads its
+# cache from the environment, and that survives buildconf.
+case "$VERSION" in
+  8.1|8.2) export ac_cv_prog_cc_c23=no ;;
+esac
+
 # --build-shared: spc reads that as a request to build nothing and errors.
 [ -n "$SHARED_EXTS" ] && build_args+=(--build-shared="$SHARED_EXTS")
 ./spc build "${build_args[@]}"

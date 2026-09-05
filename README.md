@@ -1,0 +1,72 @@
+# Lerd PHP Binaries
+
+> The static PHP builds that power [Lerd](https://lerd.sh)'s native runtime on
+> macOS — run PHP on the host instead of in a container, no image required.
+
+[![Part of Lerd](https://img.shields.io/badge/part%20of-lerd-ff2d20)](https://lerd.sh)
+[![Docs](https://img.shields.io/badge/docs-lerd.sh-blue)](https://lerd.sh/features/native-runtime)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+On macOS your project lives on the host and is mounted into the Podman VM, so a containerised PHP crosses that boundary for every file it reads. Measured over 2000 files in one PHP process, a `stat` costs 108ms in a container against 4ms on the host, and an `include` 320ms against 31ms. Lerd's native runtime removes the boundary by running PHP-FPM, the CLI and the workers directly on the host, and this repo is where those binaries come from.
+
+That's the whole point: **the speed comes from where PHP runs, not from what it gives up.** The build carries the same extension set the container image does, so Xdebug, SPX, dumps and the debug bridge keep working.
+
+## What a build produces
+
+A single version build outputs:
+
+- 🐘 **`php-native-<version>`** — the CLI, behind `lerd php`, composer, tinker and every worker
+- ⚡ **`php-native-fpm-<version>`** — the FPM nginx fastcgi's to from inside the VM
+- 🧩 **`modules/*.so`** — the extensions that can only exist as shared objects, Xdebug and pcov among them
+- 🔐 **A sha256** — Lerd verifies every download against the digest pinned in its manifest
+
+Everything is a release asset. Nothing built is ever committed here.
+
+## Available versions
+
+| PHP | Native runtime | Notes |
+|-----|----------------|-------|
+| 8.5 | ✅ | |
+| 8.4 | ✅ | |
+| 8.3 | ✅ | |
+| 8.2 | ✅ | |
+| 8.1 | ✅ | |
+| 8.0 | ❌ | fails against current libxml2 and ICU; builds only with the XML extensions stripped, which no framework survives |
+| 7.4 | ❌ | static PHP carries no OPcache below 8.0, and the same libxml2 and ICU walls apply |
+
+Lerd refuses to switch an install to the native runtime while any site runs a version that is not here, and names the sites standing in the way.
+
+## Extensions
+
+`extensions.txt` is the static set compiled into the binary, and `shared-extensions.txt` those that can only be built as loadable objects. Together they match what the PHP image ships, including `intl`, `imagick`, `mongodb`, `redis`, `soap`, `xsl` and `spx`.
+
+The set is fixed at build time, so `lerd php:ext` and `lerd php:pkg` refuse under the native runtime. A project needing something outside it stays on container mode, and Lerd's site doctor reports the drift before it surfaces at runtime.
+
+## Usage
+
+You never fetch these by hand. Lerd downloads the build matching a project's PHP version the first time it needs one, verifies the digest, and stores it in `~/.local/share/lerd/bin`:
+
+```bash
+lerd php:runtime native      # move PHP onto the host
+lerd php:runtime container   # back to the containers
+lerd php:runtime             # show the current runtime
+lerd php:list                # the versions installed for the active runtime
+```
+
+The same binaries back NativePHP Jump, whose websocket bridge needs `posix` and `pcntl` that NativePHP's bundled PHP does not carry.
+
+## Building locally
+
+```bash
+curl -o spc -fsSL https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-macos-aarch64.tar.gz
+scripts/build.sh 8.4 out/
+scripts/package.sh 8.4 out/ dist/
+```
+
+A cold build takes about fourteen minutes and needs roughly 6 GB of scratch. The libraries dominate that and are shared across versions, so each additional version costs about three minutes once `buildroot/` and `downloads/` are warm.
+
+`scripts/build.sh` refuses to publish a binary missing `dom`, `simplexml`, `xml`, `intl`, `mbstring` or `opcache`. That guard is why 7.4 and 8.0 are not here: both can be made to compile, and neither can run a real application afterwards.
+
+## License
+
+MIT

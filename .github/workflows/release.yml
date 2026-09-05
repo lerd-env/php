@@ -1,0 +1,69 @@
+name: Build and publish PHP binaries
+
+# Binaries are release assets, never repo contents. A tag publishes one set for
+# every supported PHP version and architecture.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      php:
+        description: 'Single PHP version to build (blank builds all)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+        include:
+          # macos-14 is Apple silicon, macos-13 the last Intel runner.
+          - { runner: macos-14, arch: arm64 }
+          - { runner: macos-13, arch: x86_64 }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch static-php-cli
+        run: |
+          asset="spc-macos-aarch64.tar.gz"
+          [ "${{ matrix.arch }}" = "x86_64" ] && asset="spc-macos-x86_64.tar.gz"
+          curl -fsSL -o spc.tar.gz "https://dl.static-php.dev/static-php-cli/spc-bin/nightly/$asset"
+          tar -xzf spc.tar.gz && chmod +x spc
+
+      # The libraries are most of the build and do not change between PHP
+      # versions, so caching them turns fourteen minutes into about three.
+      - name: Cache the library tree
+        uses: actions/cache@v4
+        with:
+          path: |
+            buildroot
+            downloads
+          key: spc-${{ matrix.runner }}-${{ hashFiles('extensions.txt', 'shared-extensions.txt') }}
+
+      - name: Build
+        run: scripts/build.sh "${{ matrix.php }}" out/
+
+      - name: Package
+        run: scripts/package.sh "${{ matrix.php }}" out/ dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lerd-php-${{ matrix.php }}-${{ matrix.arch }}
+          path: dist/*
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

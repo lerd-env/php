@@ -1,0 +1,13 @@
+# Build output. The binaries are release assets, never repo contents: lerd
+# fetches them by URL and digest from a published release.
+out/
+dist/
+*.tar.gz
+*.sha256
+
+# static-php-cli's working tree. Several GB, all reproducible.
+spc
+buildroot/
+source/
+downloads/
+log/

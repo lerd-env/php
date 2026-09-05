@@ -1,0 +1,13 @@
+# PHP versions with no GA release yet, and where to get their source.
+# One "<minor> <tag> <url>" per line. Lerd already ships 8.6 as a prerelease
+# tier for container images, and this is the native equivalent.
+#
+# 8.6 is commented out because static-php-cli cannot build it yet: it applies
+# the phpmicro patch set to php-src unconditionally, and those patches do not
+# apply to 8.6.0beta2 (several hunks fail in ZendAccelerator.c, php_pcre.c and
+# php_fopen_wrapper.c). The failure is fatal even though this build produces
+# only the CLI and FPM SAPIs and never uses micro, and spc offers no way to
+# skip it. Uncomment once upstream adds 8.6 support; everything else here is
+# ready for it.
+#
+# 8.6 php-8.6.0beta2 https://github.com/php/php-src/archive/refs/tags/php-8.6.0beta2.tar.gz

@@ -32,10 +32,15 @@ Everything is a release asset. Nothing built is ever committed here.
 | 8.3 | ✅ | |
 | 8.2 | ✅ | |
 | 8.1 | ✅ | |
+| 8.6 | ⏳ | prerelease; blocked on static-php-cli, whose phpmicro patches do not apply to 8.6.0beta2. The scaffolding is in place, see `prerelease.txt` |
 | 8.0 | ❌ | fails against current libxml2 and ICU; builds only with the XML extensions stripped, which no framework survives |
 | 7.4 | ❌ | static PHP carries no OPcache below 8.0, and the same libxml2 and ICU walls apply |
 
 Lerd refuses to switch an install to the native runtime while any site runs a version that is not here, and names the sites standing in the way.
+
+## Prereleases
+
+A PHP with no GA release is built from a pinned source tarball listed in `prerelease.txt`, with the extensions that do not compile against it dropped via `unbuildable-prerelease.txt`. That list mirrors lerd's own `prereleaseUnbuildable`, so a prerelease advertises the same extensions whichever runtime serves it.
 
 ## Extensions
 

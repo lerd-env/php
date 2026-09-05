@@ -11,19 +11,42 @@ VERSION="${1:?usage: build.sh <php-minor> <outdir>}"
 OUTDIR="${2:?usage: build.sh <php-minor> <outdir>}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-STATIC_EXTS="$(tr '\n' ',' < "$ROOT/extensions.txt" | sed 's/,$//')"
-SHARED_EXTS="$(tr '\n' ',' < "$ROOT/shared-extensions.txt" | sed 's/,$//')"
+# A prerelease has no GA tarball, so its source URL is pinned here, and the
+# extensions that do not compile against it yet are dropped. Both mirror how
+# lerd already treats a prerelease when it builds container images.
+PRERELEASE_LINE="$(grep -E "^$VERSION " "$ROOT/prerelease.txt" 2>/dev/null || true)"
+CUSTOM_URL=""
+DROP=""
+if [ -n "$PRERELEASE_LINE" ]; then
+  CUSTOM_URL="$(echo "$PRERELEASE_LINE" | awk '{print $3}')"
+  DROP="$(grep -vE '^#|^$' "$ROOT/unbuildable-prerelease.txt" | tr '\n' '|' | sed 's/|$//')"
+  echo "build.sh: $VERSION is a prerelease, building from $CUSTOM_URL"
+fi
+
+filter_exts() {
+  if [ -z "$DROP" ]; then cat; else grep -vE "^($DROP)$"; fi
+}
+
+STATIC_EXTS="$(filter_exts < "$ROOT/extensions.txt" | tr '\n' ',' | sed 's/,$//')"
+SHARED_EXTS="$(filter_exts < "$ROOT/shared-extensions.txt" | tr '\n' ',' | sed 's/,$//')"
 
 # The libraries are the slow part and are shared across PHP versions, so a
 # matrix job that caches buildroot/ and downloads/ spends about three minutes
 # per version instead of fourteen.
 ./spc doctor --auto-fix
-./spc download --with-php="$VERSION" \
-  --for-extensions="$STATIC_EXTS,$SHARED_EXTS" \
-  --ignore-cache-sources=php-src
-./spc build "$STATIC_EXTS" \
-  --build-cli --build-fpm \
-  --build-shared="$SHARED_EXTS"
+download_args=(--with-php="$VERSION" --ignore-cache-sources=php-src)
+if [ -n "$SHARED_EXTS" ]; then
+  download_args+=(--for-extensions="$STATIC_EXTS,$SHARED_EXTS")
+else
+  download_args+=(--for-extensions="$STATIC_EXTS")
+fi
+[ -n "$CUSTOM_URL" ] && download_args+=(--custom-url="php-src:$CUSTOM_URL")
+./spc download "${download_args[@]}"
+build_args=("$STATIC_EXTS" --build-cli --build-fpm)
+# A prerelease drops the shared extensions entirely, so do not pass an empty
+# --build-shared: spc reads that as a request to build nothing and errors.
+[ -n "$SHARED_EXTS" ] && build_args+=(--build-shared="$SHARED_EXTS")
+./spc build "${build_args[@]}"
 
 mkdir -p "$OUTDIR/modules"
 cp buildroot/bin/php     "$OUTDIR/php-native-$VERSION"

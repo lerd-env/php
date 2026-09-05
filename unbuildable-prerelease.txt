@@ -1,0 +1,7 @@
+# Third-party extensions whose sources do not yet compile against a prerelease
+# PHP. Dropped from prerelease builds only, and this list should shrink as
+# upstream catches up. Mirrors prereleaseUnbuildable in lerd's own image build,
+# so the two runtimes advertise the same extensions for the same version.
+igbinary
+pcov
+xdebug

@@ -29,11 +29,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fetch static-php-cli
-        run: |
-          asset="spc-macos-aarch64.tar.gz"
-          [ "${{ matrix.arch }}" = "x86_64" ] && asset="spc-macos-x86_64.tar.gz"
-          curl -fsSL -o spc.tar.gz "https://dl.static-php.dev/static-php-cli/spc-bin/nightly/$asset"
-          tar -xzf spc.tar.gz && chmod +x spc
+        # Newest stable release, resolved at build time. The version and digest
+        # are recorded in BUILD-INFO.txt and ship inside the release tarball.
+        run: scripts/fetch-spc.sh .
 
       # The libraries are most of the build and do not change between PHP
       # versions, so caching them turns fourteen minutes into about three.

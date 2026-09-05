@@ -20,6 +20,7 @@ A single version build outputs:
 - 🧩 **`modules/*.so`** — the extensions that can only exist as shared objects, Xdebug and pcov among them
 - 🔐 **A sha256** — Lerd verifies every download against the digest pinned in its manifest
 - 🏷️ **`Built by lerd`** — what `php -v` reports, so a binary always says where it came from
+- 🧾 **`BUILD-INFO.txt`** — the static-php-cli release and digest that produced it
 - 📄 **`THIRD-PARTY-NOTICES.txt`** — PHP's licence and every statically linked library's, as those licences require of a binary distribution
 
 Everything is a release asset. Nothing built is ever committed here.
@@ -73,13 +74,14 @@ That dependency shapes what is possible here, so it is worth being explicit abou
 - **spc patches phpmicro unconditionally**, even for a build that produces only CLI and FPM, which is what currently blocks 8.6.
 - **The build provider string** is set on spc's own configure line, so `Built by lerd` is achieved by patching `configure.ac` in the source tarball before spc extracts it.
 
+Builds track the **newest stable** static-php-cli release, resolved at build time rather than pinned, so PHP support and fixes arrive without a bump here. Nightly is deliberately avoided: it changes the build tooling underneath a release with no way to tell afterwards. The version and digest that produced a given binary are recorded in `BUILD-INFO.txt` and shipped inside its tarball, so any artifact can be traced back to its toolchain.
+
 If you are packaging static PHP for your own project, use static-php-cli directly. This repo exists for the parts specific to lerd.
 
 ## Building locally
 
 ```bash
-curl -o spc -fsSL https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-macos-aarch64.tar.gz
-scripts/build.sh 8.4 out/
+scripts/build.sh 8.4 out/      # fetches static-php-cli itself
 scripts/package.sh 8.4 out/ dist/
 ```
 

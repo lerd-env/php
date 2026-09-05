@@ -23,7 +23,8 @@ fi
 # The extensions travel with the binary they were built against: a .so from
 # another build will not load.
 tar -czf "$DISTDIR/$base.tar.gz" -C "$OUTDIR" \
-  "php-native-$VERSION" "php-native-fpm-$VERSION" modules THIRD-PARTY-NOTICES.txt
+  "php-native-$VERSION" "php-native-fpm-$VERSION" modules THIRD-PARTY-NOTICES.txt \
+  $([ -f "$OUTDIR/BUILD-INFO.txt" ] && echo BUILD-INFO.txt)
 
 shasum -a 256 "$DISTDIR/$base.tar.gz" | awk '{print $1}' > "$DISTDIR/$base.tar.gz.sha256"
 echo "$DISTDIR/$base.tar.gz"

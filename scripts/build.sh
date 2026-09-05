@@ -62,6 +62,10 @@ SHARED_EXTS="$(filter_exts < "$ROOT/shared-extensions.txt" | tr '\n' ',' | sed '
 # The libraries are the slow part and are shared across PHP versions, so a
 # matrix job that caches buildroot/ and downloads/ spends about three minutes
 # per version instead of fourteen.
+# Always the newest stable static-php-cli, never nightly. fetch-spc.sh records
+# which one it was, and that record ships with the release.
+[ -x ./spc ] || "$ROOT/scripts/fetch-spc.sh" .
+
 ./spc doctor --auto-fix
 download_args=(--with-php="$VERSION" --ignore-cache-sources=php-src)
 if [ -n "$SHARED_EXTS" ]; then
@@ -80,6 +84,8 @@ build_args=("$STATIC_EXTS" --build-cli --build-fpm)
 ./spc build "${build_args[@]}"
 
 mkdir -p "$OUTDIR/modules"
+# The toolchain that produced this binary travels with it.
+[ -f BUILD-INFO.txt ] && cp BUILD-INFO.txt "$OUTDIR/BUILD-INFO.txt"
 cp buildroot/bin/php     "$OUTDIR/php-native-$VERSION"
 cp buildroot/bin/php-fpm "$OUTDIR/php-native-fpm-$VERSION"
 cp buildroot/modules/*.so "$OUTDIR/modules/" 2>/dev/null || true

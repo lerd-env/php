@@ -100,6 +100,17 @@ for required in dom simplexml xml intl mbstring opcache; do
   fi
 done
 
+# The Debug window's query lens needs this collector, and it only exists as a
+# shared object here because the tree it compiles against is spc's. Absent
+# source is not fatal: a binary without it is still a working PHP, and lerd's
+# doctor reports the lens as unavailable rather than leaving it silently empty.
+if [ -d "${LERD_DEVTOOLS_SRC:-}" ]; then
+  "$ROOT/scripts/build-devtools.sh" source/php-src "$LERD_DEVTOOLS_SRC" "$OUTDIR" \
+    || echo "build.sh: lerd_devtools was not built; the query lens will be unavailable" >&2
+else
+  echo "build.sh: LERD_DEVTOOLS_SRC unset, skipping the query-capture collector" >&2
+fi
+
 "$OUTDIR/php-native-$VERSION" --version
 
 if ! "$OUTDIR/php-native-$VERSION" --version | grep -q "Built by lerd"; then

@@ -51,6 +51,8 @@ jobs:
       - name: Fetch static-php-cli
         # Newest stable release, resolved at build time. The version and digest
         # are recorded in BUILD-INFO.txt and ship inside the release tarball.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: scripts/fetch-spc.sh .
 
       # The libraries are most of the build and do not change between PHP
@@ -63,7 +65,23 @@ jobs:
             downloads
           key: spc-${{ matrix.runner }}-${{ hashFiles('extensions.txt', 'shared-extensions.txt') }}
 
+      # The query-capture collector lives in the lerd repository, beside the
+      # image build that compiles it in. Checked out rather than vendored so
+      # the two runtimes always ship the same collector.
+      - name: Check out the devtools collector
+        uses: actions/checkout@v4
+        with:
+          repository: lerd-env/lerd
+          path: .lerd
+          sparse-checkout: internal/podman/devtools
+
       - name: Build
+        env:
+          LERD_DEVTOOLS_SRC: ${{ github.workspace }}/.lerd/internal/podman/devtools
+          # spc resolves library versions through the GitHub API, which allows
+          # sixty unauthenticated requests an hour. A runner exhausts that
+          # immediately and every download starts returning 403.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: scripts/build.sh "${{ matrix.php }}" out/
 
       - name: Package

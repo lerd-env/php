@@ -22,7 +22,12 @@ case "$(uname -s)-$(uname -m)" in
   *) echo "fetch-spc.sh: unsupported platform $(uname -s)-$(uname -m)" >&2; exit 1 ;;
 esac
 
-tag="$(curl -fsSL "$API" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)"
+# Authenticated when a token is available: the unauthenticated API allows sixty
+# requests an hour, which a CI runner shares with everything else on it.
+auth=()
+[ -n "${GITHUB_TOKEN:-}" ] && auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+
+tag="$(curl -fsSL "${auth[@]}" "$API" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)"
 if [ -z "$tag" ]; then
   echo "fetch-spc.sh: could not resolve the latest static-php-cli release" >&2
   exit 1

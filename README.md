@@ -19,6 +19,7 @@ A single version build outputs:
 - ⚡ **`php-native-fpm-<version>`** — the FPM nginx fastcgi's to from inside the VM
 - 🧩 **`modules/*.so`** — the extensions that can only exist as shared objects, Xdebug and pcov among them
 - 🔐 **A sha256** — Lerd verifies every download against the digest pinned in its manifest
+- 📄 **`THIRD-PARTY-NOTICES.txt`** — PHP's licence and every statically linked library's, as those licences require of a binary distribution
 
 Everything is a release asset. Nothing built is ever committed here.
 
@@ -69,4 +70,6 @@ A cold build takes about fourteen minutes and needs roughly 6 GB of scratch. The
 
 ## License
 
-MIT
+The scripts and manifests in this repository are MIT.
+
+The binaries they produce are not: PHP is distributed under the [PHP License 3.01](https://www.php.net/license/), and the build statically links OpenSSL, ICU, ImageMagick, libxml2, curl, libsodium, the PostgreSQL client and others, each under its own terms. Every release tarball ships a `THIRD-PARTY-NOTICES.txt` reproducing those licences in full, which is what those licences require of anyone redistributing a binary.

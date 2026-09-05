@@ -14,10 +14,16 @@ ARCH="$(uname -m)"   # arm64 or x86_64
 mkdir -p "$DISTDIR"
 base="lerd-php-$VERSION-$OS-$ARCH"
 
+# PHP's licence and several of the statically linked libraries require their
+# notice to travel with a binary distribution, so the tarball carries them.
+if [ ! -f "$OUTDIR/THIRD-PARTY-NOTICES.txt" ]; then
+  "$(dirname "$0")/notices.sh" source "$OUTDIR/THIRD-PARTY-NOTICES.txt"
+fi
+
 # The extensions travel with the binary they were built against: a .so from
 # another build will not load.
 tar -czf "$DISTDIR/$base.tar.gz" -C "$OUTDIR" \
-  "php-native-$VERSION" "php-native-fpm-$VERSION" modules
+  "php-native-$VERSION" "php-native-fpm-$VERSION" modules THIRD-PARTY-NOTICES.txt
 
 shasum -a 256 "$DISTDIR/$base.tar.gz" | awk '{print $1}' > "$DISTDIR/$base.tar.gz.sha256"
 echo "$DISTDIR/$base.tar.gz"

@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       versions: ${{ steps.pick.outputs.versions }}
-      arches: ${{ steps.pick.outputs.arches }}
+      targets: ${{ steps.pick.outputs.targets }}
     steps:
       - id: pick
         run: |
@@ -35,11 +35,14 @@ jobs:
             echo 'versions=["8.1","8.2","8.3","8.4","8.5"]' >> "$GITHUB_OUTPUT"
           fi
           # Apple silicon by default. Intel is opt-in and on borrowed time:
-          # GitHub drops x86_64 macOS entirely after August 2027.
+          # macos-13 was retired on 2025-12-08 and macos-15-intel, its
+          # replacement and the last x86_64 image, goes in August 2027.
+          arm='{"arch":"arm64","runner":"macos-14"}'
+          intel='{"arch":"x86_64","runner":"macos-15-intel"}'
           if [ "${{ inputs.intel }}" = "true" ]; then
-            echo 'arches=["arm64","x86_64"]' >> "$GITHUB_OUTPUT"
+            echo "targets=[$arm,$intel]" >> "$GITHUB_OUTPUT"
           else
-            echo 'arches=["arm64"]' >> "$GITHUB_OUTPUT"
+            echo "targets=[$arm]" >> "$GITHUB_OUTPUT"
           fi
 
   build:
@@ -48,18 +51,11 @@ jobs:
       fail-fast: false
       matrix:
         php: ${{ fromJSON(needs.plan.outputs.versions) }}
-        arch: ${{ fromJSON(needs.plan.outputs.arches) }}
-        # include extends a matching combination rather than adding jobs of its
-        # own, which is what pairs each arch with its runner.
-        include:
-          - arch: arm64
-            runner: macos-14
-          # macos-13 was fully unsupported on 2025-12-08, so jobs asking for it
-          # queue forever rather than fail. macos-15-intel is the replacement
-          # and the last x86_64 image, retiring in August 2027.
-          - arch: x86_64
-            runner: macos-15-intel
-    runs-on: ${{ matrix.runner }}
+        # One dimension carrying both arch and runner. An include: entry whose
+        # keys match no existing combination is added as a job of its own, so
+        # pairing them there breaks the moment an arch leaves the list.
+        target: ${{ fromJSON(needs.plan.outputs.targets) }}
+    runs-on: ${{ matrix.target.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -106,7 +102,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: spc-logs-${{ matrix.php }}-${{ matrix.arch }}
+          name: spc-logs-${{ matrix.php }}-${{ matrix.target.arch }}
           path: log/
           if-no-files-found: warn
 
@@ -115,7 +111,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: lerd-php-${{ matrix.php }}-${{ matrix.arch }}
+          name: lerd-php-${{ matrix.php }}-${{ matrix.target.arch }}
           path: dist/*
 
   publish:

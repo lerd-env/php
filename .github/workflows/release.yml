@@ -15,15 +15,35 @@ permissions:
   contents: write
 
 jobs:
+  # A dispatch can name one version, which is how to exercise the workflow
+  # without spending ten jobs on it.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.pick.outputs.versions }}
+    steps:
+      - id: pick
+        run: |
+          if [ -n "${{ inputs.php }}" ]; then
+            echo "versions=[\"${{ inputs.php }}\"]" >> "$GITHUB_OUTPUT"
+          else
+            echo 'versions=["8.1","8.2","8.3","8.4","8.5"]' >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: plan
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+        php: ${{ fromJSON(needs.plan.outputs.versions) }}
+        arch: [arm64, x86_64]
+        # include extends a matching combination rather than adding jobs of its
+        # own, which is what pairs each arch with its runner.
         include:
-          # macos-14 is Apple silicon, macos-13 the last Intel runner.
-          - { runner: macos-14, arch: arm64 }
-          - { runner: macos-13, arch: x86_64 }
+          - arch: arm64
+            runner: macos-14   # Apple silicon
+          - arch: x86_64
+            runner: macos-13   # the last Intel runner
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4

@@ -84,6 +84,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: scripts/build.sh "${{ matrix.php }}" out/
 
+      # spc writes compiler output to its own log rather than stdout, so a
+      # failed library build shows only "make exited 2" in the job log. Without
+      # these a CI-only failure cannot be diagnosed at all.
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spc-logs-${{ matrix.php }}-${{ matrix.arch }}
+          path: log/
+          if-no-files-found: warn
+
       - name: Package
         run: scripts/package.sh "${{ matrix.php }}" out/ dist/
 

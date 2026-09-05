@@ -93,9 +93,15 @@ cp buildroot/modules/*.so "$OUTDIR/modules/" 2>/dev/null || true
 # Fail loudly here rather than shipping a binary that boots and then cannot run
 # a framework. 7.4 and 8.0 fail this way: they compile only once the XML
 # extensions are stripped, and nothing real runs without them.
-for required in dom simplexml xml intl mbstring opcache; do
-  if ! "$OUTDIR/php-native-$VERSION" -m | grep -qix "$required"; then
-    echo "build.sh: php $VERSION is missing $required; refusing to publish it" >&2
+#
+# -n so the verdict is about this binary and not about any php.ini the build
+# machine happens to carry, and one captured run rather than a pipe per
+# extension: grep -q exits on the first match, which leaves php killed by
+# SIGPIPE and pipefail reporting a present extension as missing.
+MODULES="$("$OUTDIR/php-native-$VERSION" -n -m)"
+for required in dom simplexml xml intl mbstring 'opcache|Zend OPcache'; do
+  if ! grep -qiE "^($required)$" <<<"$MODULES"; then
+    echo "build.sh: php $VERSION is missing ${required%%|*}; refusing to publish it" >&2
     exit 1
   fi
 done
@@ -111,8 +117,9 @@ else
   echo "build.sh: LERD_DEVTOOLS_SRC unset, skipping the query-capture collector" >&2
 fi
 
-"$OUTDIR/php-native-$VERSION" --version
+VERSION_BANNER="$("$OUTDIR/php-native-$VERSION" -n --version)"
+echo "$VERSION_BANNER"
 
-if ! "$OUTDIR/php-native-$VERSION" --version | grep -q "Built by lerd"; then
+if ! grep -q "Built by lerd" <<<"$VERSION_BANNER"; then
   echo "build.sh: warning, this binary does not report lerd as its build provider" >&2
 fi

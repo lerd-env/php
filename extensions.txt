@@ -15,7 +15,6 @@ iconv
 igbinary
 imagick
 intl
-ldap
 libxml
 mbregex
 mbstring

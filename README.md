@@ -48,6 +48,8 @@ A PHP with no GA release is built from a pinned source tarball listed in `prerel
 
 `extensions.txt` is the static set compiled into the binary, and `shared-extensions.txt` those that can only be built as loadable objects. Together they match what the PHP image ships, including `intl`, `imagick`, `mongodb`, `redis`, `soap`, `xsl` and `spx`.
 
+`ldap` is currently absent; see [known issues](known-issues.md).
+
 The set is fixed at build time, so `lerd php:ext` and `lerd php:pkg` refuse under the native runtime. A project needing something outside it stays on container mode, and Lerd's site doctor reports the drift before it surfaces at runtime.
 
 ## Usage

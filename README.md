@@ -19,6 +19,7 @@ A single version build outputs:
 - ⚡ **`php-native-fpm-<version>`** — the FPM nginx fastcgi's to from inside the VM
 - 🧩 **`modules/*.so`** — the extensions that can only exist as shared objects, Xdebug and pcov among them
 - 🔐 **A sha256** — Lerd verifies every download against the digest pinned in its manifest
+- 🏷️ **`Built by lerd`** — what `php -v` reports, so a binary always says where it came from
 - 📄 **`THIRD-PARTY-NOTICES.txt`** — PHP's licence and every statically linked library's, as those licences require of a binary distribution
 
 Everything is a release asset. Nothing built is ever committed here.

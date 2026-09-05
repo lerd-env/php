@@ -1,5 +1,4 @@
-# Build output. The binaries are release assets, never repo contents: lerd
-# fetches them by URL and digest from a published release.
+# Build output.
 out/
 dist/
 *.tar.gz
@@ -11,3 +10,6 @@ buildroot/
 source/
 downloads/
 log/
+
+# Python bytecode from running the build scripts locally.
+__pycache__/

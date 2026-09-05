@@ -1,39 +1,50 @@
 name: Build and publish PHP binaries
 
-# A tag publishes one set of binaries for every supported PHP version and
-# architecture.
+# PHP patches land on a schedule nobody here controls, so the build follows the
+# releases rather than someone remembering to tag. Each run asks php.net for the
+# newest patch of every minor in versions.txt and builds only what is missing.
 on:
-  push:
-    tags: ['v*']
+  schedule:
+    - cron: '0 6 * * 1'
   workflow_dispatch:
     inputs:
       php:
-        description: 'Single PHP version to build (blank builds all)'
+        description: 'Single PHP minor to consider (blank considers all)'
         required: false
       arm_only:
         description: 'Build Apple silicon only (skip Intel)'
+        type: boolean
+        default: false
+      force:
+        description: 'Rebuild even if the patch is already published'
         type: boolean
         default: false
 
 permissions:
   contents: write
 
+# Two runs publishing at once would race on the manifest commit.
+concurrency:
+  group: publish-php
+  cancel-in-progress: false
+
 jobs:
-  # A dispatch can name one version, which is how to exercise the workflow
-  # without spending ten jobs on it.
   plan:
     runs-on: ubuntu-latest
     outputs:
-      versions: ${{ steps.pick.outputs.versions }}
+      builds: ${{ steps.pick.outputs.builds }}
       targets: ${{ steps.pick.outputs.targets }}
     steps:
+      - uses: actions/checkout@v4
       - id: pick
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "${{ inputs.php }}" ]; then
-            echo "versions=[\"${{ inputs.php }}\"]" >> "$GITHUB_OUTPUT"
-          else
-            echo 'versions=["8.1","8.2","8.3","8.4","8.5"]' >> "$GITHUB_OUTPUT"
-          fi
+          args="${{ github.repository }}"
+          [ -n "${{ inputs.php }}" ] && args="$args --only ${{ inputs.php }}"
+          [ "${{ inputs.force }}" = "true" ] && args="$args --force"
+          builds="$(python3 scripts/plan.py $args)"
+          echo "builds=$builds" >> "$GITHUB_OUTPUT"
           # Both architectures. macos-13 was retired on 2025-12-08; its
           # replacement macos-15-intel is the last x86_64 image and goes in
           # August 2027, at which point Intel builds need another home.
@@ -47,13 +58,14 @@ jobs:
 
   build:
     needs: plan
+    if: needs.plan.outputs.builds != '[]'
     strategy:
       fail-fast: false
       matrix:
-        php: ${{ fromJSON(needs.plan.outputs.versions) }}
-        # One dimension carrying both arch and runner. An include: entry whose
-        # keys match no existing combination is added as a job of its own, so
-        # pairing them there breaks the moment an arch leaves the list.
+        # One dimension per concern, each carrying everything it needs. An
+        # include: entry whose keys match no existing combination is added as a
+        # job of its own, so pairing values there breaks silently.
+        build: ${{ fromJSON(needs.plan.outputs.builds) }}
         target: ${{ fromJSON(needs.plan.outputs.targets) }}
     runs-on: ${{ matrix.target.runner }}
     steps:
@@ -67,14 +79,16 @@ jobs:
         run: scripts/fetch-spc.sh .
 
       # The libraries are most of the build and do not change between PHP
-      # versions, so caching them turns fourteen minutes into about three.
+      # versions, so caching them turns fourteen minutes into about three. Keyed
+      # by architecture: the tree is compiled objects, and restoring another
+      # arch's would link the wrong ones.
       - name: Cache the library tree
         uses: actions/cache@v4
         with:
           path: |
             buildroot
             downloads
-          key: spc-${{ matrix.runner }}-${{ hashFiles('extensions.txt', 'shared-extensions.txt') }}
+          key: spc-${{ matrix.target.arch }}-${{ hashFiles('extensions.txt', 'shared-extensions.txt') }}
 
       # The query-capture collector lives in the lerd repository, beside the
       # image build that compiles it in. Checked out rather than vendored so
@@ -93,7 +107,7 @@ jobs:
           # sixty unauthenticated requests an hour. A runner exhausts that
           # immediately and every download starts returning 403.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: scripts/build.sh "${{ matrix.php }}" out/
+        run: scripts/build.sh "${{ matrix.build.minor }}" out/
 
       # spc writes compiler output to its own log rather than stdout, so a
       # failed library build shows only "make exited 2" in the job log. Without
@@ -102,34 +116,65 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: spc-logs-${{ matrix.php }}-${{ matrix.target.arch }}
+          name: spc-logs-${{ matrix.build.patch }}-${{ matrix.target.arch }}
           path: log/
           if-no-files-found: warn
 
       - name: Package
-        run: scripts/package.sh "${{ matrix.php }}" out/ dist/
+        run: scripts/package.sh "${{ matrix.build.minor }}" out/ dist/ "${{ matrix.build.patch }}"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: lerd-php-${{ matrix.php }}-${{ matrix.target.arch }}
+          name: pkg-${{ matrix.build.patch }}-${{ matrix.target.arch }}
           path: dist/*
 
+  # One release per patch, tagged for the PHP it carries, so a download URL says
+  # exactly which build it points at and never changes underneath a pin.
   publish:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: [plan, build]
+    if: needs.plan.outputs.builds != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build: ${{ fromJSON(needs.plan.outputs.builds) }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pkg-${{ matrix.build.patch }}-*
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ matrix.build.tag }}
+          name: PHP ${{ matrix.build.patch }}
+          files: |
+            dist/*.tar.gz
+            dist/*.tar.gz.sha256
+
+  # The manifest is what lerd actually reads, and it names the current patch for
+  # every minor. Regenerated from pins/ rather than from this run, so rebuilding
+  # one minor does not drop the other four.
+  manifest:
+    needs: [plan, publish]
+    if: needs.plan.outputs.builds != '[]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-        with: { path: dist, merge-multiple: true }
-      # The pins are built from the fragments each build wrote, so the digests
-      # in the manifest describe the assets in this very release.
-      - name: Build the pin manifest
-        run: python3 scripts/manifest.py "${{ github.ref_name }}" dist native-php.yaml
-      - uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/*.tar.gz
-            dist/*.tar.gz.sha256
-            native-php.yaml
-          generate_release_notes: true
+          pattern: pkg-*
+          path: dist
+          merge-multiple: true
+      - name: Record the new pins
+        run: |
+          mkdir -p pins
+          cp dist/pin-*.json pins/
+          python3 scripts/manifest.py pins native-php.yaml
+      - name: Commit
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add pins native-php.yaml
+          git diff --cached --quiet && { echo "manifest unchanged"; exit 0; }
+          git commit -m "chore: pin $(cd dist && ls pin-*.json | wc -l | tr -d ' ') native php builds"
+          git push

@@ -5,9 +5,10 @@
 #   scripts/package.sh 8.4 out/ dist/
 set -euo pipefail
 
-VERSION="${1:?usage: package.sh <php-minor> <outdir> <distdir>}"
+VERSION="${1:?usage: package.sh <php-minor> <outdir> <distdir> [expected-patch]}"
 OUTDIR="${2:?}"
 DISTDIR="${3:?}"
+EXPECTED="${4:-}"
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"   # arm64 or x86_64
 # lerd names platforms with Go's arch, which calls this one amd64.
@@ -22,6 +23,14 @@ case "$PATCH" in
   "$VERSION".*) ;;
   *) echo "package.sh: built binary reports $PATCH, which is not a $VERSION release" >&2; exit 1 ;;
 esac
+# The plan job decided which patch to build, and the release is tagged for it.
+# Packaging something else would publish an asset whose name disagrees with the
+# binary inside it, and buildroot is cached across versions, so this is a real
+# way to be wrong rather than a theoretical one.
+if [ -n "$EXPECTED" ] && [ "$PATCH" != "$EXPECTED" ]; then
+  echo "package.sh: asked for $EXPECTED but the binary reports $PATCH" >&2
+  exit 1
+fi
 
 mkdir -p "$DISTDIR"
 base="lerd-php-$PATCH-$OS-$ARCH"

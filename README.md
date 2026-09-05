@@ -25,7 +25,7 @@ A single version build outputs:
 
 Everything is a release asset. Nothing built is ever committed here.
 
-Builds are for **Apple silicon**. Intel is opt-in on a dispatch and on borrowed time: GitHub retired the `macos-13` image in December 2025 and drops x86_64 macOS entirely after August 2027. An Intel Mac keeps using lerd's container runtime, which lerd says plainly rather than offering a switch with no binary behind it.
+Builds cover **Apple silicon and Intel**. GitHub retired the `macos-13` image in December 2025; Intel builds use its replacement, `macos-15-intel`, which is the last x86_64 image and retires in August 2027. Intel will need another home before then.
 
 ## Available versions
 

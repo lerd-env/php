@@ -10,8 +10,8 @@ on:
       php:
         description: 'Single PHP version to build (blank builds all)'
         required: false
-      intel:
-        description: 'Also build for Intel Macs (x86_64)'
+      arm_only:
+        description: 'Build Apple silicon only (skip Intel)'
         type: boolean
         default: false
 
@@ -34,15 +34,15 @@ jobs:
           else
             echo 'versions=["8.1","8.2","8.3","8.4","8.5"]' >> "$GITHUB_OUTPUT"
           fi
-          # Apple silicon by default. Intel is opt-in and on borrowed time:
-          # macos-13 was retired on 2025-12-08 and macos-15-intel, its
-          # replacement and the last x86_64 image, goes in August 2027.
+          # Both architectures. macos-13 was retired on 2025-12-08; its
+          # replacement macos-15-intel is the last x86_64 image and goes in
+          # August 2027, at which point Intel builds need another home.
           arm='{"arch":"arm64","runner":"macos-14"}'
           intel='{"arch":"x86_64","runner":"macos-15-intel"}'
-          if [ "${{ inputs.intel }}" = "true" ]; then
-            echo "targets=[$arm,$intel]" >> "$GITHUB_OUTPUT"
-          else
+          if [ "${{ inputs.arm_only }}" = "true" ]; then
             echo "targets=[$arm]" >> "$GITHUB_OUTPUT"
+          else
+            echo "targets=[$arm,$intel]" >> "$GITHUB_OUTPUT"
           fi
 
   build:

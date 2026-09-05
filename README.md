@@ -62,6 +62,19 @@ lerd php:list                # the versions installed for the active runtime
 
 The same binaries back NativePHP Jump, whose websocket bridge needs `posix` and `pcntl` that NativePHP's bundled PHP does not carry.
 
+## Built with static-php-cli
+
+Every binary here is produced by [static-php-cli](https://github.com/crazywhalecc/static-php-cli) (MIT), and this repository is the thin layer that drives it: which extensions to compile, how to name and package the result, and which licences to ship alongside it. The compiler toolchain, the patch sets, the dependency graph and the library versions are all its work, not ours.
+
+That dependency shapes what is possible here, so it is worth being explicit about:
+
+- **Extension names are spc's**, not PHP's. `mbregex` is a separate entry from `mbstring`, for instance, and a list written from `php -m` output silently loses it.
+- **spc chooses the library versions.** PHP 7.4 and 8.0 fail against the libxml2 and ICU it builds, which is why they are absent above.
+- **spc patches phpmicro unconditionally**, even for a build that produces only CLI and FPM, which is what currently blocks 8.6.
+- **The build provider string** is set on spc's own configure line, so `Built by lerd` is achieved by patching `configure.ac` in the source tarball before spc extracts it.
+
+If you are packaging static PHP for your own project, use static-php-cli directly. This repo exists for the parts specific to lerd.
+
 ## Building locally
 
 ```bash
@@ -76,6 +89,6 @@ A cold build takes about fourteen minutes and needs roughly 6 GB of scratch. The
 
 ## License
 
-The scripts and manifests in this repository are MIT.
+The scripts and manifests in this repository are MIT, as is [static-php-cli](https://github.com/crazywhalecc/static-php-cli), the tool that builds the binaries.
 
 The binaries they produce are not: PHP is distributed under the [PHP License 3.01](https://www.php.net/license/), and the build statically links OpenSSL, ICU, ImageMagick, libxml2, curl, libsodium, the PostgreSQL client and others, each under its own terms. Every release tarball ships a `THIRD-PARTY-NOTICES.txt` reproducing those licences in full, which is what those licences require of anyone redistributing a binary.

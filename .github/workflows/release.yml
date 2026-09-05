@@ -1,7 +1,7 @@
 name: Build and publish PHP binaries
 
-# Binaries are release assets, never repo contents. A tag publishes one set for
-# every supported PHP version and architecture.
+# A tag publishes one set of binaries for every supported PHP version and
+# architecture.
 on:
   push:
     tags: ['v*']

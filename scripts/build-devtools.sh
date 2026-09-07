@@ -23,6 +23,12 @@ if [ ! -f "$PHPSRC/main/php_config.h" ]; then
   exit 1
 fi
 
+# Absolute before anything cds: the compile runs from a staging directory, so a
+# relative php-src (which is how the build passes it) would leave every -I
+# pointing at nothing and the only symptom is php.h not being found.
+PHPSRC="$(cd "$PHPSRC" && pwd)"
+EXTSRC="$(cd "$EXTSRC" && pwd)"
+
 staging="$(mktemp -d)"
 cp "$EXTSRC"/*.c "$EXTSRC"/*.h "$staging/"
 # The source includes "config.h", which is what php_config.h is called inside a

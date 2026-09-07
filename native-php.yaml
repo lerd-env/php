@@ -45,10 +45,10 @@ tools:
       darwin/arm64: lerd-php-8.4.25-darwin-arm64.tar.gz
     digests:
       darwin/amd64: f0319a2337ed255965139492d6ac5fa2b050119d540831351f08adb157afaba8
-      darwin/arm64: 0068c7832bb031ca0a36f475d62aed940e59e1944d4151e736096b4aeebaf95a
+      darwin/arm64: db371e39f0e31fdaeda9958ad02a4e9c1da6127121a6df896119feab005ae8c7
     sizes:
       darwin/amd64: 68614013
-      darwin/arm64: 65712107
+      darwin/arm64: 65714328
   php-native-8.5:
     version: "8.5.10"
     url: https://github.com/lerd-env/php/releases/download/php-8.5.10/{asset}

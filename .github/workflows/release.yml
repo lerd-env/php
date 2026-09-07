@@ -19,6 +19,9 @@ on:
         description: 'Rebuild even if the patch is already published'
         type: boolean
         default: false
+      lerd_ref:
+        description: 'lerd branch to take the devtools collector from (blank uses its default branch)'
+        required: false
 
 permissions:
   contents: write
@@ -97,6 +100,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: lerd-env/lerd
+          ref: ${{ inputs.lerd_ref }}
           path: .lerd
           sparse-checkout: internal/podman/devtools
 

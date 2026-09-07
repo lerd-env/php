@@ -8,18 +8,32 @@ the ones already published here. Prints the build matrix as JSON. PHP patches
 land on a schedule nobody here controls, so the build is driven by what is
 released rather than by someone remembering to tag.
 """
-import json, os, pathlib, sys, urllib.error, urllib.request
+import json, os, pathlib, sys, time, urllib.error, urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 API = "https://www.php.net/releases/index.php?json&version=%s&max=1"
 
 
 def latest_patch(minor):
-    """The newest published patch of a minor, or None if php.net has none."""
-    with urllib.request.urlopen(API % minor, timeout=30) as r:
-        data = json.load(r)
-    # Keyed by the full version; a minor with no GA release answers with {}.
-    return next(iter(data), None)
+    """The newest published patch of a minor, or None.
+
+    None also covers php.net being unreachable. This runs unattended every
+    week, and one slow answer used to abort the whole run, so a minor nobody
+    could ask about is left at whatever is already published rather than
+    taking the other four down with it.
+    """
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(API % minor, timeout=30) as r:
+                data = json.load(r)
+            # Keyed by the full version; a minor with no GA release gives {}.
+            return next(iter(data), None)
+        except Exception as e:  # network, timeout, or a body that is not JSON
+            if attempt == 2:
+                print("plan.py: php.net did not answer for %s (%s)" % (minor, e), file=sys.stderr)
+                return None
+            time.sleep(3)
+    return None
 
 
 def version_key(v):

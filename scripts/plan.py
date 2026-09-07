@@ -22,6 +22,37 @@ def latest_patch(minor):
     return next(iter(data), None)
 
 
+def version_key(v):
+    return tuple(int(n) for n in v.split("."))
+
+
+def newest_published(repo, minor, token):
+    """The highest patch of a minor already released here, or None.
+
+    php.net has been observed answering with an older patch than the one it
+    served an hour earlier. Without this the plan would happily build it,
+    publish it, and repoint the manifest at a downgrade for every install.
+    """
+    req = urllib.request.Request(
+        "https://api.github.com/repos/%s/releases?per_page=100" % repo,
+        headers={"Accept": "application/vnd.github+json",
+                 **({"Authorization": "Bearer " + token} if token else {})})
+    best = None
+    for rel in json.load(urllib.request.urlopen(req, timeout=30)):
+        tag = rel.get("tag_name", "")
+        if not tag.startswith("php-"):
+            continue
+        v = tag[4:]
+        if not v.startswith(minor + "."):
+            continue
+        try:
+            if best is None or version_key(v) > version_key(best):
+                best = v
+        except ValueError:
+            continue
+    return best
+
+
 def already_published(repo, tag, token):
     req = urllib.request.Request(
         "https://api.github.com/repos/%s/releases/tags/%s" % (repo, tag),
@@ -57,6 +88,12 @@ def main():
         if not patch:
             print("plan.py: php.net publishes no release for %s" % minor, file=sys.stderr)
             continue
+        # Never plan a patch older than one already shipped for this minor.
+        shipped = newest_published(repo, minor, token)
+        if shipped and version_key(shipped) > version_key(patch):
+            print("plan.py: php.net offers %s for %s but %s is already published; keeping %s"
+                  % (patch, minor, shipped, shipped), file=sys.stderr)
+            patch = shipped
         tag = "php-" + patch
         if not force and already_published(repo, tag, token):
             print("plan.py: %s already published" % tag, file=sys.stderr)

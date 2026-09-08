@@ -100,6 +100,20 @@ cp buildroot/bin/php     "$OUTDIR/php-native-$VERSION"
 cp buildroot/bin/php-fpm "$OUTDIR/php-native-fpm-$VERSION"
 cp buildroot/modules/*.so "$OUTDIR/modules/" 2>/dev/null || true
 
+# SPX serves its control panel from files rather than from the extension, and
+# the path it is built with is inside a container image. Carried here so a host
+# install has a copy to point at; without it the profiler answers its own
+# dashboard with "File not found."
+for ui in source/spx/assets/web-ui source/php-spx/assets/web-ui; do
+  if [ -d "$ui" ]; then
+    mkdir -p "$OUTDIR/share/php-spx/assets"
+    cp -R "$ui" "$OUTDIR/share/php-spx/assets/"
+    break
+  fi
+done
+[ -d "$OUTDIR/share/php-spx/assets/web-ui" ] || \
+  echo "build.sh: SPX web UI assets not found; the profiler dashboard will be unavailable" >&2
+
 # Fail loudly here rather than shipping a binary that boots and then cannot run
 # a framework. 7.4 and 8.0 fail this way: they compile only once the XML
 # extensions are stripped, and nothing real runs without them.

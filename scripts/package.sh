@@ -45,6 +45,7 @@ fi
 # another build will not load.
 tar -czf "$DISTDIR/$base.tar.gz" -C "$OUTDIR" \
   "php-native-$VERSION" "php-native-fpm-$VERSION" modules THIRD-PARTY-NOTICES.txt \
+  $([ -d "$OUTDIR/share" ] && echo share) \
   $([ -f "$OUTDIR/BUILD-INFO.txt" ] && echo BUILD-INFO.txt)
 
 shasum -a 256 "$DISTDIR/$base.tar.gz" | awk '{print $1}' > "$DISTDIR/$base.tar.gz.sha256"

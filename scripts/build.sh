@@ -104,7 +104,9 @@ cp buildroot/modules/*.so "$OUTDIR/modules/" 2>/dev/null || true
 # the path it is built with is inside a container image. Carried here so a host
 # install has a copy to point at; without it the profiler answers its own
 # dashboard with "File not found."
-for ui in source/spx/assets/web-ui source/php-spx/assets/web-ui; do
+# spc extracts an extension into php-src rather than beside it, so SPX's
+# assets sit under ext/spx. The other paths are kept in case that moves.
+for ui in source/php-src/ext/spx/assets/web-ui source/spx/assets/web-ui source/php-spx/assets/web-ui; do
   if [ -d "$ui" ]; then
     mkdir -p "$OUTDIR/share/php-spx/assets"
     cp -R "$ui" "$OUTDIR/share/php-spx/assets/"

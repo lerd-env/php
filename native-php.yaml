@@ -9,10 +9,10 @@ tools:
       darwin/arm64: lerd-php-8.1.34-darwin-arm64.tar.gz
     digests:
       darwin/amd64: 54c58da9424c18bb1850d6ec6970c02ec076696297437d65b8589d0b41dc3ecb
-      darwin/arm64: 4ecb7e715628db83e460bd28eccfea0bfae3c14f91f9917b2d93d5fdcc392259
+      darwin/arm64: e2045cf8b0293debba6980a5c64ea35af92abc358abe506f64faa84b2e817d8c
     sizes:
       darwin/amd64: 66324360
-      darwin/arm64: 63954559
+      darwin/arm64: 64024566
   php-native-8.2:
     version: "8.2.33"
     url: https://github.com/lerd-env/php/releases/download/php-8.2.33/{asset}
@@ -21,10 +21,10 @@ tools:
       darwin/arm64: lerd-php-8.2.33-darwin-arm64.tar.gz
     digests:
       darwin/amd64: ffd458c616b463a93f4d0d72439ea8b5dc190e112c716293dc821253a2cf7ab5
-      darwin/arm64: 8846414f2d8ced7d84694e8d594adbd13b464469340c028dd18f856c666b3e0e
+      darwin/arm64: afc1036ba928e16ac4782119202f0178c5117eb77a0a5efbc88f51e43cb16a22
     sizes:
       darwin/amd64: 66583081
-      darwin/arm64: 64231193
+      darwin/arm64: 64301080
   php-native-8.3:
     version: "8.3.33"
     url: https://github.com/lerd-env/php/releases/download/php-8.3.33/{asset}
@@ -33,10 +33,10 @@ tools:
       darwin/arm64: lerd-php-8.3.33-darwin-arm64.tar.gz
     digests:
       darwin/amd64: 901a4aaa7aabdb0a4407b4acb99852ad43bc9fed21001d2764b64d9c47e737d5
-      darwin/arm64: dfa28df0089b6055d16d0ff5b4f9e6eb31ff162bca3eeaab71ea4d84523f9042
+      darwin/arm64: 049651adbb780b6cf6a81811b21fcdbf2448b4c94fa652ca9d97bf59cbd3aa8d
     sizes:
       darwin/amd64: 66811435
-      darwin/arm64: 64441151
+      darwin/arm64: 64511208
   php-native-8.4:
     version: "8.4.25"
     url: https://github.com/lerd-env/php/releases/download/php-8.4.25/{asset}
@@ -45,10 +45,10 @@ tools:
       darwin/arm64: lerd-php-8.4.25-darwin-arm64.tar.gz
     digests:
       darwin/amd64: f0319a2337ed255965139492d6ac5fa2b050119d540831351f08adb157afaba8
-      darwin/arm64: 8f54d4794dfc305eaf04c5c458c267125e9b8c2391ccb7d2b6256192f1d44efe
+      darwin/arm64: ff385b1a304734a19ef153f123c188ffc9fcf25b095c523cad322361249edefa
     sizes:
       darwin/amd64: 68614013
-      darwin/arm64: 65714320
+      darwin/arm64: 65782306
   php-native-8.5:
     version: "8.5.10"
     url: https://github.com/lerd-env/php/releases/download/php-8.5.10/{asset}
@@ -57,7 +57,7 @@ tools:
       darwin/arm64: lerd-php-8.5.10-darwin-arm64.tar.gz
     digests:
       darwin/amd64: 3cbeb8b433f8c7991242e94e4e4ac9c788202f3b7c404db32c4eb1f58fdf3e84
-      darwin/arm64: eafef89337ac69545b92f9cfae81d04fd85ea55a93f400d11ce0dac75ecfd1e8
+      darwin/arm64: 41abe986489de54e9c75a9e36f8fed2ae31cc6294ebaa91e3f58b50538d5a8d2
     sizes:
       darwin/amd64: 69418922
-      darwin/arm64: 66532654
+      darwin/arm64: 66602595

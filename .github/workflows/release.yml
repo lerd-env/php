@@ -44,7 +44,6 @@ jobs:
     outputs:
       builds: ${{ steps.pick.outputs.builds }}
       targets: ${{ steps.pick.outputs.targets }}
-      rev: ${{ steps.pick.outputs.rev }}
     steps:
       - uses: actions/checkout@v4
       - id: pick
@@ -59,15 +58,6 @@ jobs:
           [ "${{ github.event_name }}" = "repository_dispatch" ] && args="$args --force"
           builds="$(python3 scripts/plan.py $args)"
           echo "builds=$builds" >> "$GITHUB_OUTPUT"
-          # Any rebuild of a published patch carries a revision, or its assets
-          # would overwrite the originals under the same name. The run number
-          # rather than the pins: a queued run checks out the pins from before
-          # the run ahead of it committed, and would reuse that run's revision.
-          rev=0
-          if [ "${{ github.event_name }}" = "repository_dispatch" ] || [ "${{ inputs.force }}" = "true" ]; then
-            rev="${{ github.run_number }}"
-          fi
-          echo "rev=$rev" >> "$GITHUB_OUTPUT"
           # Both architectures. macos-13 was retired on 2025-12-08; its
           # replacement macos-15-intel is the last x86_64 image and goes in
           # August 2027, at which point Intel builds need another home.
@@ -145,8 +135,6 @@ jobs:
           if-no-files-found: warn
 
       - name: Package
-        env:
-          LERD_BUILD_REV: ${{ needs.plan.outputs.rev }}
         run: scripts/package.sh "${{ matrix.build.minor }}" out/ dist/ "${{ matrix.build.patch }}"
 
       - uses: actions/upload-artifact@v4

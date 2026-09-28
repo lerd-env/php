@@ -31,8 +31,17 @@ for minor in sorted(pins, key=lambda m: [int(n) for n in m.split(".")]):
     if len(versions) != 1:
         sys.exit("manifest.py: %s pinned at %s across platforms" % (minor, ", ".join(sorted(versions))))
     patch = entries[0]["version"]
+    # The build revision distinguishes two builds of the same PHP, which is
+    # what a collector change produces. lerd decides it has an update by
+    # comparing version strings, so a rebuild that leaves the version alone
+    # reaches nobody; a fourth component is still a version lerd accepts.
+    revs = {int(p.get("rev", 0)) for p in entries}
+    if len(revs) != 1:
+        sys.exit("manifest.py: %s pinned at revisions %s across platforms" % (minor, ", ".join(str(r) for r in sorted(revs))))
+    rev = revs.pop()
+    version = patch if rev == 0 else "%s.%d" % (patch, rev)
     lines.append("  php-native-%s:" % minor)
-    lines.append('    version: "%s"' % patch)
+    lines.append('    version: "%s"' % version)
     lines.append("    url: https://github.com/lerd-env/php/releases/download/php-%s/{asset}" % patch)
     for field, key in (("assets", "asset"), ("digests", "sha256"), ("sizes", "size")):
         lines.append("    %s:" % field)

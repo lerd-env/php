@@ -33,7 +33,15 @@ if [ -n "$EXPECTED" ] && [ "$PATCH" != "$EXPECTED" ]; then
 fi
 
 mkdir -p "$DISTDIR"
+# A rebuild that changes nothing about PHP itself, which is what a collector
+# change is, still has to reach machines that already hold this patch. lerd
+# compares the manifest version with the one it stamped at download and nothing
+# else, so the build revision rides in the version as a fourth component and in
+# the asset name, which keeps the old file addressable while the new one lands
+# under the same release tag.
+REV="${LERD_BUILD_REV:-0}"
 base="lerd-php-$PATCH-$OS-$ARCH"
+[ "$REV" != "0" ] && base="lerd-php-$PATCH-r$REV-$OS-$ARCH"
 
 # PHP's licence and several of the statically linked libraries require their
 # notice to travel with a binary distribution, so the tarball carries them.
@@ -56,7 +64,7 @@ shasum -a 256 "$DISTDIR/$base.tar.gz" | awk '{print $1}' > "$DISTDIR/$base.tar.g
 SHA="$(cat "$DISTDIR/$base.tar.gz.sha256")"
 SIZE="$(wc -c < "$DISTDIR/$base.tar.gz" | tr -d ' ')"
 cat > "$DISTDIR/pin-$VERSION-$OS-$GOARCH.json" <<JSON
-{"minor":"$VERSION","version":"$PATCH","platform":"$OS/$GOARCH","asset":"$base.tar.gz","sha256":"$SHA","size":$SIZE}
+{"minor":"$VERSION","version":"$PATCH","rev":$REV,"platform":"$OS/$GOARCH","asset":"$base.tar.gz","sha256":"$SHA","size":$SIZE}
 JSON
 
 echo "$DISTDIR/$base.tar.gz"

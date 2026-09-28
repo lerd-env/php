@@ -14,50 +14,62 @@ tools:
       darwin/amd64: 66324360
       darwin/arm64: 64024566
   php-native-8.2:
-    version: "8.2.33"
-    url: https://github.com/lerd-env/php/releases/download/php-8.2.33/{asset}
+    version: "8.2.34"
+    url: https://github.com/lerd-env/php/releases/download/php-8.2.34/{asset}
+    published:
+      darwin/amd64: "2026-09-28T18:42:01Z"
+      darwin/arm64: "2026-09-28T18:40:24Z"
     assets:
-      darwin/amd64: lerd-php-8.2.33-darwin-x86_64.tar.gz
-      darwin/arm64: lerd-php-8.2.33-darwin-arm64.tar.gz
+      darwin/amd64: lerd-php-8.2.34-darwin-x86_64.tar.gz
+      darwin/arm64: lerd-php-8.2.34-darwin-arm64.tar.gz
     digests:
-      darwin/amd64: ffd458c616b463a93f4d0d72439ea8b5dc190e112c716293dc821253a2cf7ab5
-      darwin/arm64: afc1036ba928e16ac4782119202f0178c5117eb77a0a5efbc88f51e43cb16a22
+      darwin/amd64: 48abde5e549f8d821d39ca6cba7acf22e657435acaa3439b79780916a357e19c
+      darwin/arm64: a10027ce53b4640b5303041a495b0903436b64e768c0a7fe713cbad435cb5c73
     sizes:
-      darwin/amd64: 66583081
-      darwin/arm64: 64301080
+      darwin/amd64: 66778443
+      darwin/arm64: 64425549
   php-native-8.3:
-    version: "8.3.33"
-    url: https://github.com/lerd-env/php/releases/download/php-8.3.33/{asset}
+    version: "8.3.35"
+    url: https://github.com/lerd-env/php/releases/download/php-8.3.35/{asset}
+    published:
+      darwin/amd64: "2026-09-28T19:00:53Z"
+      darwin/arm64: "2026-09-28T18:29:52Z"
     assets:
-      darwin/amd64: lerd-php-8.3.33-darwin-x86_64.tar.gz
-      darwin/arm64: lerd-php-8.3.33-darwin-arm64.tar.gz
+      darwin/amd64: lerd-php-8.3.35-darwin-x86_64.tar.gz
+      darwin/arm64: lerd-php-8.3.35-darwin-arm64.tar.gz
     digests:
-      darwin/amd64: 901a4aaa7aabdb0a4407b4acb99852ad43bc9fed21001d2764b64d9c47e737d5
-      darwin/arm64: 049651adbb780b6cf6a81811b21fcdbf2448b4c94fa652ca9d97bf59cbd3aa8d
+      darwin/amd64: ff93c11c822cdd27413c4bd9a660257c25903207784a061397981c1a1df67a47
+      darwin/arm64: 4fbe3459af2ff74a38662ac72a927307e29d8a565cba6bb3183ae584c2400790
     sizes:
-      darwin/amd64: 66811435
-      darwin/arm64: 64511208
+      darwin/amd64: 67004257
+      darwin/arm64: 64630402
   php-native-8.4:
-    version: "8.4.25"
-    url: https://github.com/lerd-env/php/releases/download/php-8.4.25/{asset}
+    version: "8.4.26"
+    url: https://github.com/lerd-env/php/releases/download/php-8.4.26/{asset}
+    published:
+      darwin/amd64: "2026-09-28T18:49:32Z"
+      darwin/arm64: "2026-09-28T18:31:07Z"
     assets:
-      darwin/amd64: lerd-php-8.4.25-darwin-x86_64.tar.gz
-      darwin/arm64: lerd-php-8.4.25-darwin-arm64.tar.gz
+      darwin/amd64: lerd-php-8.4.26-darwin-x86_64.tar.gz
+      darwin/arm64: lerd-php-8.4.26-darwin-arm64.tar.gz
     digests:
-      darwin/amd64: f0319a2337ed255965139492d6ac5fa2b050119d540831351f08adb157afaba8
-      darwin/arm64: ff385b1a304734a19ef153f123c188ffc9fcf25b095c523cad322361249edefa
+      darwin/amd64: ad21a6778421748a833d092cee87ead5d984a78354e8bc7711db19e1abf53aea
+      darwin/arm64: 1f7a1efe35f37bfe491735f778e381c09ad023207fd1f45a2fae4915bffacc0b
     sizes:
-      darwin/amd64: 68614013
-      darwin/arm64: 65782306
+      darwin/amd64: 68809187
+      darwin/arm64: 65901558
   php-native-8.5:
-    version: "8.5.10"
-    url: https://github.com/lerd-env/php/releases/download/php-8.5.10/{asset}
+    version: "8.5.11"
+    url: https://github.com/lerd-env/php/releases/download/php-8.5.11/{asset}
+    published:
+      darwin/amd64: "2026-09-28T18:48:10Z"
+      darwin/arm64: "2026-09-28T18:40:05Z"
     assets:
-      darwin/amd64: lerd-php-8.5.10-darwin-x86_64.tar.gz
-      darwin/arm64: lerd-php-8.5.10-darwin-arm64.tar.gz
+      darwin/amd64: lerd-php-8.5.11-darwin-x86_64.tar.gz
+      darwin/arm64: lerd-php-8.5.11-darwin-arm64.tar.gz
     digests:
-      darwin/amd64: 3cbeb8b433f8c7991242e94e4e4ac9c788202f3b7c404db32c4eb1f58fdf3e84
-      darwin/arm64: 41abe986489de54e9c75a9e36f8fed2ae31cc6294ebaa91e3f58b50538d5a8d2
+      darwin/amd64: 3bba566bac8eddcf87dfa9eef51d9723942725a01738a72a02af42da55b6576a
+      darwin/arm64: 59761adfe93cf737282843ea1cbc74e2fef3dd86839554efd71c3dddb2b867dc
     sizes:
-      darwin/amd64: 69418922
-      darwin/arm64: 66602595
+      darwin/amd64: 69617981
+      darwin/arm64: 66723803

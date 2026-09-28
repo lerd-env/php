@@ -2,13 +2,14 @@
 # Build one static PHP for the native runtime: the CLI and FPM binaries, plus
 # the extensions that can only exist as shared objects.
 #
-#   scripts/build.sh 8.4 out/
+#   scripts/build.sh 8.4 out/ [8.4.26]
 #
 # Leaves in <outdir>: php-native-<v>, php-native-fpm-<v>, modules/*.so
 set -euo pipefail
 
-VERSION="${1:?usage: build.sh <php-minor> <outdir>}"
-OUTDIR="${2:?usage: build.sh <php-minor> <outdir>}"
+VERSION="${1:?usage: build.sh <php-minor> <outdir> [patch]}"
+OUTDIR="${2:?usage: build.sh <php-minor> <outdir> [patch]}"
+PATCH="${3:-}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # A prerelease has no GA tarball, so its source URL is pinned here, and the
@@ -21,6 +22,13 @@ if [ -n "$PRERELEASE_LINE" ]; then
   CUSTOM_URL="$(echo "$PRERELEASE_LINE" | awk '{print $3}')"
   DROP="$(grep -vE '^#|^$' "$ROOT/unbuildable-prerelease.txt" | tr '\n' '|' | sed 's/|$//')"
   echo "build.sh: $VERSION is a prerelease, building from $CUSTOM_URL"
+fi
+# Given only the minor, spc asks php.net for its newest patch on every runner,
+# and while a release is rolling out two runners can get different answers.
+# The patch the plan chose is fetched by name instead, so both architectures
+# build the same source.
+if [ -z "$CUSTOM_URL" ] && [ -n "$PATCH" ]; then
+  CUSTOM_URL="https://www.php.net/distributions/php-$PATCH.tar.xz"
 fi
 
 filter_exts() {

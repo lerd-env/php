@@ -59,11 +59,13 @@ jobs:
           [ "${{ github.event_name }}" = "repository_dispatch" ] && args="$args --force"
           builds="$(python3 scripts/plan.py $args)"
           echo "builds=$builds" >> "$GITHUB_OUTPUT"
-          # One revision for the whole run: the manifest refuses a minor whose
-          # architectures disagree, and the two build on separate runners.
+          # Any rebuild of a published patch carries a revision, or its assets
+          # would overwrite the originals under the same name. The run number
+          # rather than the pins: a queued run checks out the pins from before
+          # the run ahead of it committed, and would reuse that run's revision.
           rev=0
-          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            rev="$(python3 -c "import glob, json; print(max([int(json.load(open(f)).get('rev', 0)) for f in glob.glob('pins/*.json')] or [0]) + 1)")"
+          if [ "${{ github.event_name }}" = "repository_dispatch" ] || [ "${{ inputs.force }}" = "true" ]; then
+            rev="${{ github.run_number }}"
           fi
           echo "rev=$rev" >> "$GITHUB_OUTPUT"
           # Both architectures. macos-13 was retired on 2025-12-08; its

@@ -60,8 +60,9 @@ jobs:
           echo "builds=$builds" >> "$GITHUB_OUTPUT"
           # Both architectures. macos-13 was retired on 2025-12-08; its
           # replacement macos-15-intel is the last x86_64 image and goes in
-          # August 2027, at which point Intel builds need another home.
-          arm='{"arch":"arm64","runner":"macos-14"}'
+          # August 2027, at which point Intel builds need another home. macos-14
+          # was retired on 2026-11-02.
+          arm='{"arch":"arm64","runner":"macos-15"}'
           intel='{"arch":"x86_64","runner":"macos-15-intel"}'
           if [ "${{ inputs.arm_only }}" = "true" ]; then
             echo "targets=[$arm]" >> "$GITHUB_OUTPUT"
@@ -81,6 +82,10 @@ jobs:
         build: ${{ fromJSON(needs.plan.outputs.builds) }}
         target: ${{ fromJSON(needs.plan.outputs.targets) }}
     runs-on: ${{ matrix.target.runner }}
+    # clang targets the runner's own macOS by default, so a macos-15 runner
+    # would quietly stop the binaries from running on Sonoma.
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '14.0'
     steps:
       - uses: actions/checkout@v4
 
@@ -101,7 +106,7 @@ jobs:
           path: |
             buildroot
             downloads
-          key: spc-${{ matrix.target.arch }}-${{ hashFiles('extensions.txt', 'shared-extensions.txt') }}
+          key: spc-${{ matrix.target.arch }}-macos${{ env.MACOSX_DEPLOYMENT_TARGET }}-${{ hashFiles('extensions.txt', 'shared-extensions.txt') }}
 
       # The query-capture collector lives in the lerd repository, beside the
       # image build that compiles it in. Checked out rather than vendored so

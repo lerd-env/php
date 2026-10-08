@@ -1,0 +1,16 @@
+# Extensions the official windows.php.net build does not carry, fetched as DLLs
+# built for the same PHP minor and compiler. One "<extension> <version> <source>"
+# per line, where source is:
+#
+#   pecl    downloads.php.net/~windows/pecl/releases/<ext>/<version>/
+#   xdebug  xdebug.org/files/
+#
+# Versions follow what lerd's PHP image runs, so both runtimes report the same
+# extension versions. Every one is checked for 8.1 to 8.5 before it lands here:
+# a version missing a minor fails that minor's build.
+redis 6.3.0 pecl
+igbinary 3.2.17RC1 pecl
+mongodb 2.5.3 pecl
+imagick 3.8.1 pecl
+pcov 1.0.12 pecl
+xdebug 3.5.3 xdebug

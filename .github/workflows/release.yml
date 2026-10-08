@@ -22,6 +22,10 @@ on:
         description: 'Build Apple silicon only (skip Intel)'
         type: boolean
         default: false
+      skip_windows:
+        description: 'Skip the Windows builds'
+        type: boolean
+        default: false
       force:
         description: 'Rebuild even if the patch is already published'
         type: boolean
@@ -43,6 +47,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       builds: ${{ steps.pick.outputs.builds }}
+      windows: ${{ steps.pick.outputs.windows }}
+      releases: ${{ steps.pick.outputs.releases }}
       targets: ${{ steps.pick.outputs.targets }}
     steps:
       - uses: actions/checkout@v4
@@ -53,11 +59,14 @@ jobs:
           args="${{ github.repository }}"
           [ -n "${{ inputs.php }}" ] && args="$args --only ${{ inputs.php }}"
           [ "${{ inputs.force }}" = "true" ] && args="$args --force"
+          [ "${{ inputs.skip_windows }}" = "true" ] && args="$args --skip-windows"
           # A collector change rebuilds what is already published, which the
           # planner would otherwise skip as present.
           [ "${{ github.event_name }}" = "repository_dispatch" ] && args="$args --force"
-          builds="$(python3 scripts/plan.py $args)"
-          echo "builds=$builds" >> "$GITHUB_OUTPUT"
+          plan="$(python3 scripts/plan.py $args)"
+          echo "builds=$(jq -c .macos <<<"$plan")" >> "$GITHUB_OUTPUT"
+          echo "windows=$(jq -c .windows <<<"$plan")" >> "$GITHUB_OUTPUT"
+          echo "releases=$(jq -c .releases <<<"$plan")" >> "$GITHUB_OUTPUT"
           # Both architectures. macos-13 was retired on 2025-12-08; its
           # replacement macos-15-intel is the last x86_64 image and goes in
           # August 2027, at which point Intel builds need another home. macos-14
@@ -147,15 +156,70 @@ jobs:
           name: pkg-${{ matrix.build.patch }}-${{ matrix.target.arch }}
           path: dist/*
 
+  # Windows has no PHP-FPM and static-php-cli cannot load DLL extensions, so
+  # nothing is compiled here but the collector: the official windows.php.net
+  # build is repackaged with the PECL and Xdebug DLLs, and php-cgi serves in
+  # place of FPM. See scripts/build-windows.py.
+  build-windows:
+    needs: plan
+    if: needs.plan.outputs.windows != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        build: ${{ fromJSON(needs.plan.outputs.windows) }}
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      # PHP refuses a module linked with a newer MSVC than its core, and 8.1 to
+      # 8.3 cores were linked with VS 2019, so the collector needs that toolset
+      # beside the image's VS 2022 one. build-windows.py picks it on its own.
+      - name: Add the VS 2019 toolset
+        if: contains(fromJSON('["8.1","8.2","8.3"]'), matrix.build.minor)
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          if (-not (Test-Path "$vs\VC\Tools\MSVC\14.29.*")) {
+            $p = Start-Process -Wait -PassThru "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe" -ArgumentList `
+              "modify", "--installPath", "`"$vs`"", "--add", "Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64", "--quiet", "--norestart", "--nocache"
+            if ($p.ExitCode -ne 0) { exit $p.ExitCode }
+          }
+
+      - name: Check out the devtools collector
+        uses: actions/checkout@v4
+        with:
+          repository: lerd-env/lerd
+          ref: ${{ inputs.lerd_ref || github.event.client_payload.lerd_ref }}
+          path: .lerd
+          sparse-checkout: internal/podman/devtools
+
+      - name: Build
+        env:
+          LERD_DEVTOOLS_SRC: ${{ github.workspace }}/.lerd/internal/podman/devtools
+        run: python scripts/build-windows.py "${{ matrix.build.minor }}" out "${{ matrix.build.patch }}"
+
+      - name: Package
+        run: python scripts/package-windows.py "${{ matrix.build.minor }}" out dist "${{ matrix.build.patch }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkg-${{ matrix.build.patch }}-windows
+          path: dist/*
+
   # One release per patch, tagged for the PHP it carries, so a download URL says
-  # exactly which build it points at and never changes underneath a pin.
+  # exactly which build it points at and never changes underneath a pin. A
+  # Windows build that fails, or that windows.php.net has not published yet,
+  # leaves the release to macOS and is added to it by a later run; a macOS
+  # failure still stops the release, as it always has.
   publish:
-    needs: [plan, build]
-    if: needs.plan.outputs.builds != '[]'
+    needs: [plan, build, build-windows]
+    if: >-
+      always() && needs.plan.result == 'success' && needs.plan.outputs.releases != '[]' &&
+      needs.build.result != 'failure' && needs.build.result != 'cancelled'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build: ${{ fromJSON(needs.plan.outputs.builds) }}
+        build: ${{ fromJSON(needs.plan.outputs.releases) }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -175,7 +239,7 @@ jobs:
   # one minor does not drop the other four.
   manifest:
     needs: [plan, publish]
-    if: needs.plan.outputs.builds != '[]'
+    if: always() && needs.publish.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -111,6 +111,103 @@ def linker_version(exe):
     return head[pe + 26], head[pe + 27]
 
 
+def pe_imports(path):
+    """The DLL names a PE image imports, ordinary and delay-loaded, lowercased."""
+    data = pathlib.Path(path).read_bytes()
+    pe = struct.unpack_from("<I", data, 0x3C)[0]
+    nsections, optsize = struct.unpack_from("<H", data, pe + 6)[0], struct.unpack_from("<H", data, pe + 20)[0]
+    opt = pe + 24
+    # PE32+ keeps its data directories 112 bytes into the optional header.
+    dirs = opt + (112 if struct.unpack_from("<H", data, opt)[0] == 0x20B else 96)
+    sections = []
+    for i in range(nsections):
+        s = opt + optsize + 40 * i
+        vsize, va, rawsize, raw = struct.unpack_from("<IIII", data, s + 8)
+        sections.append((va, max(vsize, rawsize), raw))
+
+    def offset(rva):
+        for va, size, raw in sections:
+            if va <= rva < va + size:
+                return rva - va + raw
+        return None
+
+    def name(rva):
+        o = offset(rva)
+        return data[o:data.index(b"\0", o)].decode("ascii").lower() if o is not None else None
+
+    names = set()
+    # Directory 1 is the import table (name RVA at +12 of 20-byte entries),
+    # 13 the delay-load table (name RVA at +4 of 32-byte entries).
+    for index, size, at in ((1, 20, 12), (13, 32, 4)):
+        rva = struct.unpack_from("<I", data, dirs + 8 * index)[0]
+        o = offset(rva) if rva else None
+        while o is not None and any(data[o:o + size]):
+            n = name(struct.unpack_from("<I", data, o + at)[0])
+            if n:
+                names.add(n)
+            o += size
+    return names
+
+
+# The Visual C++ runtime the official build and the PECL DLLs are linked
+# against. Windows does not ship it, and only machines that happen to have the
+# redistributable installed (as every CI runner does) can load PHP without it.
+VC_RUNTIME = re.compile(r"(vcruntime140(_\d+)?|msvcp140(_\w+)?|concrt140|vccorlib140|vcomp140)\.dll")
+
+
+def vc_redist():
+    """The newest x64 Visual C++ redist directory any Visual Studio carries.
+
+    The v14 runtime is backward compatible, so the newest one serves cores and
+    modules linked with VS 2019 as well as VS 2022.
+    """
+    vswhere = pathlib.Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) \
+        / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+    if not vswhere.exists():
+        die("no Visual Studio installation found (vswhere.exe is missing)")
+    out = subprocess.run([str(vswhere), "-all", "-products", "*", "-property", "installationPath"],
+                         capture_output=True, text=True, check=True).stdout
+    best = None
+    for install in filter(None, (l.strip() for l in out.splitlines())):
+        root = pathlib.Path(install) / "VC" / "Redist" / "MSVC"
+        if not root.is_dir():
+            continue
+        for d in root.iterdir():
+            if not re.fullmatch(r"\d+\.\d+\.\d+", d.name) or not (d / "x64").is_dir():
+                continue
+            key = tuple(int(p) for p in d.name.split("."))
+            if best is None or key > best[0]:
+                best = (key, d / "x64")
+    if not best:
+        die("no Visual C++ redist found under any Visual Studio install; "
+            "the C++ workload carries it in VC\\Redist\\MSVC")
+    return best[1]
+
+
+def bundle_vc_runtime(outdir, phpdir, redist):
+    """Copy every VC runtime DLL anything shipped imports next to php.exe.
+
+    Windows looks in the executable's directory before System32, so these are
+    what php.exe and php-cgi.exe load whether or not the machine has the
+    redistributable. Repeats until closed, since msvcp140 itself imports
+    vcruntime140.
+    """
+    available = {p.name.lower(): p for p in redist.rglob("*.dll")}
+    bundled = set()
+    while True:
+        wanted = set()
+        for image in list(outdir.rglob("*.dll")) + list(outdir.rglob("*.exe")):
+            wanted |= {n for n in pe_imports(image) if VC_RUNTIME.fullmatch(n)}
+        missing = wanted - {p.name.lower() for p in phpdir.glob("*.dll")}
+        if not missing:
+            return sorted(bundled)
+        for n in sorted(missing):
+            if n not in available:
+                die("the build imports %s, which %s does not carry" % (n, redist))
+            shutil.copy2(available[n], phpdir / available[n].name)
+            bundled.add(available[n].name)
+
+
 def pick_toolset(core):
     """The newest installed MSVC toolset PHP will accept a module from.
 
@@ -238,6 +335,10 @@ def main():
             die("windows-extensions.txt: unknown source %r for %s" % (source, ext))
         info.append("%s %s: %s sha256:%s" % (ext, version, url, sha256(data)))
 
+    # Bundled before the checks below, so they load the copies that ship.
+    redist = vc_redist()
+    runtime = bundle_vc_runtime(outdir, phpdir, redist)
+
     # Turn on the static set the macOS build compiles in. Built-in modules need
     # no line; everything else must be a DLL by now, or the build stops rather
     # than ship a PHP missing an extension the container image has.
@@ -317,6 +418,10 @@ def main():
               "skipping the query-capture collector", file=sys.stderr)
         info.append("lerd_devtools: not built")
 
+    # The collector may link against a runtime DLL nothing else used.
+    runtime = sorted(set(runtime) | set(bundle_vc_runtime(outdir, phpdir, redist)))
+    info.append("vc runtime: %s from %s" % (", ".join(runtime), redist.parent.name))
+
     info += ["", "not available on Windows: " + ", ".join(sorted(unavailable))]
     (outdir / "BUILD-INFO.txt").write_text("\n".join(info) + "\n")
 
@@ -325,7 +430,11 @@ def main():
                   "This build redistributes the official windows.php.net PHP and the\n"
                   "extension DLLs listed in BUILD-INFO.txt. Each licence text shipped\n"
                   "with them is reproduced below. Xdebug is distributed under the\n"
-                  "Xdebug License: https://xdebug.org/license\n\n")
+                  "Xdebug License: https://xdebug.org/license\n\n"
+                  "The Visual C++ runtime DLLs beside php.exe, listed in BUILD-INFO.txt,\n"
+                  "are Microsoft Visual C++ Redistributable files, distributed under the\n"
+                  "Visual Studio licence terms for Distributable Code:\n"
+                  "https://learn.microsoft.com/visualstudio/releases/2022/redistribution\n\n")
         for f in notices:
             out.write("=" * 64 + "\n%s (%s)\n" % (f.parent.name, f.name) + "=" * 64 + "\n")
             out.write(f.read_text(encoding="utf-8", errors="replace") + "\n")

@@ -33,7 +33,7 @@ Windows has no PHP-FPM, and static-php-cli builds cannot load DLL extensions, so
 
 A Windows asset (`lerd-php-<patch>-windows-x86_64.tar.gz`, platform `windows/amd64`) unpacks to:
 
-- 🐘 **`php-native-<minor>/`** — the official build as a directory, since `php.exe` and `php-cgi.exe` need `php8.dll` and the DLLs beside them; ImageMagick's DLLs sit here too, where Windows looks for them
+- 🐘 **`php-native-<minor>/`** — the official build as a directory, since `php.exe` and `php-cgi.exe` need `php8.dll` and the DLLs beside them; ImageMagick's DLLs sit here too, where Windows looks for them, and so does the Visual C++ runtime everything shipped imports (`vcruntime140.dll`, `vcruntime140_1.dll`, `msvcp140.dll`, `vcomp140.dll`), so PHP runs on a machine without the redistributable
 - 🧩 **`modules/`** — what loads on demand: `xdebug.dll`, `pcov.dll`, `lerd_devtools-<minor>.dll`
 - ⚙️ **`conf.d/10-lerd-extensions.ini`** — turns on the extensions the macOS build compiles in; `extension_dir` is left for lerd to set, since only it knows where the tree was unpacked
 - 🧾 **`BUILD-INFO.txt`** and **`THIRD-PARTY-NOTICES.txt`** — every source with its version and sha256, and every licence shipped with them

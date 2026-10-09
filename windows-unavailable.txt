@@ -1,0 +1,11 @@
+# Extensions in extensions.txt or shared-extensions.txt that cannot exist on
+# Windows. The Windows build skips these instead of failing on them, and lists
+# them in BUILD-INFO.txt so the gap is visible in the artifact itself.
+#
+# pcntl, posix, sysvmsg and sysvsem are Unix process and IPC APIs. SPX supports
+# Linux, macOS and FreeBSD only; lerd profiles with Xdebug on Windows instead.
+pcntl
+posix
+sysvmsg
+sysvsem
+spx

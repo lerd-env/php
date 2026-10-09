@@ -1,7 +1,7 @@
 # Lerd PHP Binaries
 
-> The static PHP builds that power [Lerd](https://lerd.sh)'s native runtime on
-> macOS — run PHP on the host instead of in a container, no image required.
+> The PHP builds that power [Lerd](https://lerd.sh)'s native runtime on macOS
+> and Windows — run PHP on the host instead of in a container, no image required.
 
 [![Part of Lerd](https://img.shields.io/badge/part%20of-lerd-ff2d20)](https://lerd.sh)
 [![Docs](https://img.shields.io/badge/docs-lerd.sh-blue)](https://lerd.sh/features/native-runtime)
@@ -9,7 +9,7 @@
 
 On macOS your project lives on the host and is mounted into the Podman VM, so a containerised PHP crosses that boundary for every file it reads. Measured over 2000 files in one PHP process, a `stat` costs 108ms in a container against 4ms on the host, and an `include` 320ms against 31ms. Lerd's native runtime removes the boundary by running PHP-FPM, the CLI and the workers directly on the host, and this repo is where those binaries come from.
 
-The build carries the same extension set the container image does, so Xdebug, SPX, dumps and the debug bridge keep working.
+The build carries the same extension set the container image does, so Xdebug, SPX, dumps and the debug bridge keep working. Windows builds are assembled differently and lack a few Unix-only extensions; see [Windows](#windows).
 
 ## What a build produces
 
@@ -24,6 +24,25 @@ A single version build outputs:
 - 📄 **`THIRD-PARTY-NOTICES.txt`** — PHP's licence and every statically linked library's, as those licences require of a binary distribution
 
 Builds cover **Apple silicon and Intel**. GitHub retired the `macos-13` image in December 2025; Intel builds use its replacement, `macos-15-intel`, which is the last x86_64 image and retires in August 2027. Intel will need another home before then.
+
+## Windows
+
+Windows reaches the project over a 9p share, which makes the container boundary far more expensive than on macOS: over the same 2000 files, `stat` costs about 2070ms in a container against 46ms on the host, and `include` 5300ms against 198ms.
+
+Windows has no PHP-FPM, and static-php-cli builds cannot load DLL extensions, so the Windows build is assembled rather than compiled. `scripts/build-windows.py` takes the official [windows.php.net](https://windows.php.net) NTS build, verified against the digest it publishes, adds the PECL and Xdebug DLLs pinned in `windows-extensions.txt`, and compiles only `lerd_devtools`, against the matching devel pack. `php-cgi.exe` serves in place of FPM, with `PHP_FCGI_CHILDREN` giving it a pool whose children share one OPcache.
+
+A Windows asset (`lerd-php-<patch>-windows-x86_64.tar.gz`, platform `windows/amd64`) unpacks to:
+
+- 🐘 **`php-native-<minor>/`** — the official build as a directory, since `php.exe` and `php-cgi.exe` need `php8.dll` and the DLLs beside them; ImageMagick's DLLs sit here too, where Windows looks for them, and so does the Visual C++ runtime everything shipped imports (`vcruntime140.dll`, `vcruntime140_1.dll`, `msvcp140.dll`, `vcomp140.dll`), so PHP runs on a machine without the redistributable
+- 🧩 **`modules/`** — what loads on demand: `xdebug.dll`, `pcov.dll`, `lerd_devtools-<minor>.dll`
+- ⚙️ **`conf.d/10-lerd-extensions.ini`** — turns on the extensions the macOS build compiles in; `extension_dir` is left for lerd to set, since only it knows where the tree was unpacked
+- 🧾 **`BUILD-INFO.txt`** and **`THIRD-PARTY-NOTICES.txt`** — every source with its version and sha256, and every licence shipped with them
+
+The pins and the manifest are shared with macOS: a minor carries one patch on every platform. windows.php.net publishes its build hours after php.net announces a patch, so a run that catches the gap publishes macOS alone, and the next run adds the Windows asset to the same release. Until it does, the manifest leaves Windows out of that minor rather than holding macOS back.
+
+`pcntl`, `posix`, `sysvmsg`, `sysvsem` and `spx` do not exist on Windows; `windows-unavailable.txt` lists them and every build records the gap in `BUILD-INFO.txt`. Lerd profiles with Xdebug there instead of SPX.
+
+A module only loads into a PHP linked with the same or a newer MSVC, so the collector for 8.1 to 8.3, whose cores were linked with VS 2019, is built with the VS 2019 toolset; `build-windows.py` picks the right one from the core's PE header.
 
 ## Available versions
 
@@ -103,6 +122,16 @@ scripts/package.sh 8.4 out/ dist/
 A cold build takes about fourteen minutes and needs roughly 6 GB of scratch. The libraries dominate that and are shared across versions, so each additional version costs about three minutes once `buildroot/` and `downloads/` are warm.
 
 `scripts/build.sh` refuses to publish a binary missing `dom`, `simplexml`, `xml`, `intl`, `mbstring` or `opcache`. That guard is why 7.4 and 8.0 are not here: both can be made to compile, and neither can run a real application afterwards.
+
+On Windows, with Python, git and the VS 2022 Build Tools (C++ workload):
+
+```powershell
+$env:LERD_DEVTOOLS_SRC = "C:\path\to\lerd\internal\podman\devtools"   # optional
+python scripts/build-windows.py 8.4 out 8.4.26
+python scripts/package-windows.py 8.4 out dist 8.4.26
+```
+
+Nothing is compiled but the collector, so a build takes a couple of minutes and about 400 MB of scratch, most of it ImageMagick. 8.1 to 8.3 also need the VS 2019 toolset, component `Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64`. `build-windows.py` holds the result to the same `dom`, `simplexml`, `xml`, `intl`, `mbstring` and `opcache` guard, refuses any extension in `extensions.txt` it cannot provide, and loads every DLL it ships before packaging it.
 
 ## License
 

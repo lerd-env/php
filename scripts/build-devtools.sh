@@ -42,22 +42,27 @@ cp "$PHPSRC/main/php_config.h" "$staging/config.h"
     -undefined dynamic_lookup \
     lerd_devtools.c -o lerd_devtools.so )
 
+# The CLI binary, picked by name: a glob would match php-native-fpm too and run
+# the CLI with the fpm binary as its script, which fails and skipped this check.
+binary="$(ls "$OUTDIR"/php-native-* 2>/dev/null | grep -v fpm | head -1)"
+if [ ! -x "$binary" ]; then
+  echo "build-devtools.sh: no php-native binary in $OUTDIR to name and check the module against" >&2
+  rm -rf "$staging"
+  exit 1
+fi
+
+# A module that compiles but will not load is worse than none: it would warn on
+# every request while the query lens stayed empty. Checked before it ships.
+if ! "$binary" -n -d "extension=$staging/lerd_devtools.so" \
+     -r 'exit(extension_loaded("lerd_devtools") ? 0 : 1);'; then
+  echo "build-devtools.sh: lerd_devtools.so built but will not load into this PHP" >&2
+  rm -rf "$staging"
+  exit 1
+fi
+
 mkdir -p "$OUTDIR/modules"
 # Named per version: a module is built against one PHP's ABI and will not
 # load into another.
-cp "$staging/lerd_devtools.so" "$OUTDIR/modules/lerd_devtools-$(basename "$(ls "$OUTDIR"/php-native-* | grep -v fpm | head -1)" | sed 's/php-native-//').so"
+cp "$staging/lerd_devtools.so" "$OUTDIR/modules/lerd_devtools-$(basename "$binary" | sed 's/php-native-//').so"
 rm -rf "$staging"
-
-# A module that compiles but will not load is worse than none: it would warn on
-# every request while the query lens stayed empty.
-if ! "$OUTDIR/php-native-"* --version >/dev/null 2>&1; then
-  echo "build-devtools.sh: no built binary to verify against, skipping the load check" >&2
-  exit 0
-fi
-binary="$(ls "$OUTDIR"/php-native-* | grep -v fpm | head -1)"
-if ! "$binary" -d "extension=$(ls "$OUTDIR"/modules/lerd_devtools-*.so | head -1)" \
-     -r 'exit(extension_loaded("lerd_devtools") ? 0 : 1);'; then
-  echo "build-devtools.sh: lerd_devtools.so built but will not load into this PHP" >&2
-  exit 1
-fi
 echo "lerd_devtools.so built and loads"

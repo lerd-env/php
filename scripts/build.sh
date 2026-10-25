@@ -82,6 +82,19 @@ else
   download_args+=(--for-extensions="$STATIC_EXTS")
 fi
 [ -n "$CUSTOM_URL" ] && download_args+=(--custom-url="php-src:$CUSTOM_URL")
+# spc fetches whatever release is newest, even one that refuses this PHP, so
+# each shared extension is pinned to the newest stable release that supports
+# it. A custom source is always re-fetched, so a cached one cannot leak across.
+for ext in ${SHARED_EXTS//,/ }; do
+  case "$ext" in
+    xdebug) package=xdebug/xdebug ;;
+    pcov)   package=pecl/pcov ;;
+    *) echo "build.sh: no Packagist package known for shared extension $ext" >&2; exit 1 ;;
+  esac
+  resolved="$("$ROOT/scripts/resolve-shared-ext.py" "$package" "${PATCH:-$VERSION}")"
+  echo "build.sh: $ext ${resolved%% *} for PHP ${PATCH:-$VERSION}"
+  download_args+=(--custom-git="$ext:${resolved%% *}:${resolved#* }")
+done
 ./spc download "${download_args[@]}"
 
 brand_php_src

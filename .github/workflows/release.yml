@@ -242,7 +242,11 @@ jobs:
     if: always() && needs.publish.result == 'success'
     runs-on: ubuntu-latest
     steps:
+      # main as it is now, not the commit the run started from: a merge during
+      # the build otherwise leaves the pin commit behind and its push rejected.
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/download-artifact@v4
         with:
           pattern: pkg-*

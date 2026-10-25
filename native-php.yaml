@@ -63,7 +63,7 @@ tools:
     url: https://github.com/lerd-env/php/releases/download/php-8.4.27/{asset}
     published:
       darwin/amd64: "2026-10-25T18:53:44Z"
-      darwin/arm64: "2026-10-25T18:52:48Z"
+      darwin/arm64: "2026-10-25T20:28:36Z"
       windows/amd64: "2026-10-25T18:40:15Z"
     assets:
       darwin/amd64: lerd-php-8.4.27-darwin-x86_64.tar.gz
@@ -71,11 +71,11 @@ tools:
       windows/amd64: lerd-php-8.4.27-windows-x86_64.tar.gz
     digests:
       darwin/amd64: c07fb252303c504c9c95843a04f036d30e9461d9a1247f81163d88a3ede28ecc
-      darwin/arm64: 964379c2359c3d8fbff35d0f1703f9cf563378306a72638fd4aa00947c78701d
+      darwin/arm64: 96dda758dba7dbe91dfb668105f51f8d39d25b2d7d6155274fa2230844b43067
       windows/amd64: 23ba6435cd158c29d3304dc1361f067d0bbc1ac7ede282b3deb9ff2f5a0bc920
     sizes:
       darwin/amd64: 68880805
-      darwin/arm64: 67388624
+      darwin/arm64: 67388706
       windows/amd64: 50353887
   php-native-8.5:
     version: "8.5.12"

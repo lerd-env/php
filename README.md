@@ -53,7 +53,7 @@ A module only loads into a PHP linked with the same or a newer MSVC, so the coll
 | 8.3 | ✅ | |
 | 8.2 | ✅ | |
 | 8.1 | ✅ | |
-| 8.6 | ⏳ | prerelease; blocked on static-php-cli, whose phpmicro patches do not apply to 8.6.0beta2. The scaffolding is in place, see `prerelease.txt` |
+| 8.6 | ⏳ | 8.6.0 is out but blocked upstream: xdebug has no stable release for 8.6, and static-php-cli ships 8.6 patches only in its unreleased v3 rewrite |
 | 8.0 | ❌ | fails against current libxml2 and ICU; builds only with the XML extensions stripped, which no framework survives |
 | 7.4 | ❌ | static PHP carries no OPcache below 8.0, and the same libxml2 and ICU walls apply |
 

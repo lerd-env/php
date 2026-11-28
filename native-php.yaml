@@ -5,94 +5,94 @@ tools:
     version: "8.1.34"
     url: https://github.com/lerd-env/php/releases/download/php-8.1.34/{asset}
     published:
-      darwin/amd64: "2026-10-28T08:59:36Z"
-      darwin/arm64: "2026-10-28T09:05:03Z"
-      windows/amd64: "2026-10-28T08:47:49Z"
+      darwin/amd64: "2026-11-27T23:54:54Z"
+      darwin/arm64: "2026-11-27T23:54:58Z"
+      windows/amd64: "2026-11-27T22:59:00Z"
     assets:
       darwin/amd64: lerd-php-8.1.34-darwin-x86_64.tar.gz
       darwin/arm64: lerd-php-8.1.34-darwin-arm64.tar.gz
       windows/amd64: lerd-php-8.1.34-windows-x86_64.tar.gz
     digests:
-      darwin/amd64: 22592481cc9f3fa1a89683a2cbc3b5f22151d1a8570c375e1cebed3a94927eb5
-      darwin/arm64: 24615719c1f4410501d9858828f3b67be0a81cb09fdf0e02b5fb677c3abdb1d9
-      windows/amd64: 0e70fd304d0478cfba5a0c462a89513c3c27de34854ef3ae6a4fa05911ba1adb
+      darwin/amd64: bde6e5e352a416cb7d2c1fa65dee7bfeca4ba9b1fb0dddd48c1a95a95ab8b02e
+      darwin/arm64: 3f6a4841266fdfaf62b8a806ff012fc7361101fed50183dafaed968263e98f73
+      windows/amd64: cb69ccf5ee15387c14c0558658adfb70517da6fbf8eb0a9ba76f55da6fe1f008
     sizes:
-      darwin/amd64: 66540645
-      darwin/arm64: 65539101
-      windows/amd64: 45640130
+      darwin/amd64: 66777794
+      darwin/arm64: 65702704
+      windows/amd64: 45640087
   php-native-8.2:
     version: "8.2.36"
     url: https://github.com/lerd-env/php/releases/download/php-8.2.36/{asset}
     published:
-      darwin/amd64: "2026-11-19T21:30:37Z"
-      darwin/arm64: "2026-11-19T21:36:53Z"
-      windows/amd64: "2026-11-19T20:35:51Z"
+      darwin/amd64: "2026-11-27T23:45:21Z"
+      darwin/arm64: "2026-11-28T00:03:23Z"
+      windows/amd64: "2026-11-27T23:02:05Z"
     assets:
       darwin/amd64: lerd-php-8.2.36-darwin-x86_64.tar.gz
       darwin/arm64: lerd-php-8.2.36-darwin-arm64.tar.gz
       windows/amd64: lerd-php-8.2.36-windows-x86_64.tar.gz
     digests:
-      darwin/amd64: 261de9fbccea4a0520f61117cca861af8e638e7e7162578dbcf4993addc30e4e
-      darwin/arm64: 6d87a7bd9b10f0fd97606e40916e7eabd4ec2fa8ca8e522fe4b994e0c9544ef0
-      windows/amd64: 32c771c05e76514bdaf5aa391cfd5c3bb3770c93afa60fa3120611f6775af27e
+      darwin/amd64: 3d0038d3720adf738de2d75a73b3e6894c6f58cbff04c5c7f5f21f368fba7fa3
+      darwin/arm64: 092323bc795d72e685d124a286bdb4ab27b011a7ee407bf7499e88ff45494f26
+      windows/amd64: 1a014e1eda02ce21b57dd29874f1d7a54318629440409a051848783a94ecf57b
     sizes:
-      darwin/amd64: 67028119
-      darwin/arm64: 65960230
-      windows/amd64: 48672713
+      darwin/amd64: 67087836
+      darwin/arm64: 66014686
+      windows/amd64: 48672604
   php-native-8.3:
     version: "8.3.37"
     url: https://github.com/lerd-env/php/releases/download/php-8.3.37/{asset}
     published:
-      darwin/amd64: "2026-11-19T21:35:48Z"
-      darwin/arm64: "2026-11-19T21:31:52Z"
-      windows/amd64: "2026-11-19T20:35:49Z"
+      darwin/amd64: "2026-11-28T00:13:59Z"
+      darwin/arm64: "2026-11-27T23:51:20Z"
+      windows/amd64: "2026-11-27T23:02:43Z"
     assets:
       darwin/amd64: lerd-php-8.3.37-darwin-x86_64.tar.gz
       darwin/arm64: lerd-php-8.3.37-darwin-arm64.tar.gz
       windows/amd64: lerd-php-8.3.37-windows-x86_64.tar.gz
     digests:
-      darwin/amd64: 7def66d721758e237c531c51c661662ddb7a370b21f585d51f6bac292eac7b67
-      darwin/arm64: b646d445737b9d6de22fb17df8d7f8117dcccaab000cbee56240c264f380e45f
-      windows/amd64: 56af7fca87a9ef2f93db28ea365ea945474b5d8d4c9004b10dcc15904d3c2bb6
+      darwin/amd64: 7f2d75c81d8b6a27c7205c293b6c4b9b8eeab871cdaf0be3a91775ec41a9048b
+      darwin/arm64: d68d4bee406c90f76200635ca5980e7f33e56993b66d9a6badb3d879b024908a
+      windows/amd64: fd24859b41fff07f81d444e26bcab516935ec18490ff313f58ae7b6720cf4daa
     sizes:
-      darwin/amd64: 67258745
-      darwin/arm64: 66182160
-      windows/amd64: 49099616
+      darwin/amd64: 67239306
+      darwin/arm64: 66242111
+      windows/amd64: 49099169
   php-native-8.4:
     version: "8.4.28"
     url: https://github.com/lerd-env/php/releases/download/php-8.4.28/{asset}
     published:
-      darwin/amd64: "2026-11-19T21:25:52Z"
-      darwin/arm64: "2026-11-19T21:07:31Z"
-      windows/amd64: "2026-11-19T20:35:55Z"
+      darwin/amd64: "2026-11-28T00:13:21Z"
+      darwin/arm64: "2026-11-27T23:31:04Z"
+      windows/amd64: "2026-11-27T22:58:50Z"
     assets:
       darwin/amd64: lerd-php-8.4.28-darwin-x86_64.tar.gz
       darwin/arm64: lerd-php-8.4.28-darwin-arm64.tar.gz
       windows/amd64: lerd-php-8.4.28-windows-x86_64.tar.gz
     digests:
-      darwin/amd64: a03a702277802b039d23c25bf3adc9b5e5143b08640b285848f836f71a47b423
-      darwin/arm64: f355e0e4f653ebe0252144274ec325e37ac5cafecf2e7c1dda836964ba4bd993
-      windows/amd64: 744e8a7dfc5300e87c42fe1354a21bb7ec56c3c3e7260df11002c5c1256d95b8
+      darwin/amd64: 8eb05b87b006c2f16010892165ff2cae98d92ae93953d4794987e19295bd191d
+      darwin/arm64: a469a07acdd44de12be31045a10d7288c30b1cd0409e4289162d6bd77352a9d7
+      windows/amd64: c634ed843d13266ee519380ca797510adc348e3d3b1545d720c6f18d5a11f31d
     sizes:
-      darwin/amd64: 69077378
-      darwin/arm64: 67578141
-      windows/amd64: 50448008
+      darwin/amd64: 69139742
+      darwin/arm64: 67638882
+      windows/amd64: 50447916
   php-native-8.5:
     version: "8.5.13"
     url: https://github.com/lerd-env/php/releases/download/php-8.5.13/{asset}
     published:
-      darwin/amd64: "2026-11-19T21:32:39Z"
-      darwin/arm64: "2026-11-19T21:21:31Z"
-      windows/amd64: "2026-11-19T20:35:54Z"
+      darwin/amd64: "2026-11-27T23:57:09Z"
+      darwin/arm64: "2026-11-27T23:43:24Z"
+      windows/amd64: "2026-11-27T23:02:28Z"
     assets:
       darwin/amd64: lerd-php-8.5.13-darwin-x86_64.tar.gz
       darwin/arm64: lerd-php-8.5.13-darwin-arm64.tar.gz
       windows/amd64: lerd-php-8.5.13-windows-x86_64.tar.gz
     digests:
-      darwin/amd64: 4de0949250fd0c7f516d548a2fd4433c0d79b5e806dfe548e1c76aaf9ac2cf36
-      darwin/arm64: 651e6a70d4f2e694c5e9104e8ad2f40d030cead988b2dc9b9e82303432a0fc91
-      windows/amd64: 3d7a67a97b0330d1cc3a359ef55bd9ff3074738496c1fad07acb8a85e64b1946
+      darwin/amd64: 69a2fea74370004c873a8d1221681d2a0d12af43213a1b616de6a274713b64c8
+      darwin/arm64: 74abbabea802e3f43851efe04399638b6a4f932d32fce473f7e3557dc2e78575
+      windows/amd64: a398e0e6a36e8558db8c1485ad2886db7a8a58c66e267744db640944bb18ed84
     sizes:
-      darwin/amd64: 69886290
-      darwin/arm64: 68332428
-      windows/amd64: 51474092
+      darwin/amd64: 69942476
+      darwin/arm64: 68390522
+      windows/amd64: 51474024
